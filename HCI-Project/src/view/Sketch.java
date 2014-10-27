@@ -2,6 +2,8 @@ package view;
 
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.EventObject;
 
@@ -33,28 +35,28 @@ public class Sketch extends Canvas {
 	private CText titleText;
 	private SpringLayout mainLayout;
 	
+	private static final int TB_HEIGHT = 35;
+	
 	public Sketch(MainScreen parent, String title, int width, int height) {
 		super(width, height);
 		
 		this.parent = parent;
+		titleBar = new Canvas();
+		setSize(width, height);
 		
 		init(title);
+
 		validate();
 	}
 	
 	// create title bar of the canvas
 	public void init(String title) {
-		// set main layout
-		mainLayout = new SpringLayout();
-		setLayout(mainLayout);
+		// set absolute layout
+		setLayout(null);
 		
 		// fixes title bar at the top of the sketch
-		titleBar = new Canvas();
 		titleBar.setBackground(Color.RED);
-		mainLayout.putConstraint(SpringLayout.WEST, titleBar, 0, SpringLayout.WEST, this);
-		mainLayout.putConstraint(SpringLayout.EAST, titleBar, 0, SpringLayout.EAST, this);
-		mainLayout.putConstraint(SpringLayout.NORTH, titleBar, 0, SpringLayout.NORTH, this);
-		mainLayout.putConstraint(SpringLayout.SOUTH, titleBar, 35, SpringLayout.NORTH, this);
+		titleBar.setLocation(0, 0);
 		
 		titleText = titleBar.newText(10., 10., title);
 		
@@ -67,11 +69,20 @@ public class Sketch extends Canvas {
 		parent.listen(attachMoveSM());
 	}
 	
+	// resizes title bar with sketch
+	@Override
+	public void setSize(int width, int height) {
+		super.setSize(width, height);
+		titleBar.setSize(width, TB_HEIGHT);
+		validate();
+	}
+	
+	
 	public void changeTitle(String newTitle) {
 		titleText.setText(newTitle);
 	}
 	
-	
+	// enable draw on the sketch
 	private CStateMachine attachDrawSM() {
 		return new CStateMachine(this) {
 			
@@ -106,13 +117,14 @@ public class Sketch extends Canvas {
 	private CStateMachine attachMoveSM() {
 		return new CStateMachine(titleBar) {
 			
-			Point2D initialPoint;
+			// distance to the top-left corner of the canvas
+			Point2D delta;
 			
 			State movable = new State() {
 				
 				Transition press = new Press(BUTTON1, ">> position") {
 					public void action() {
-						initialPoint = getPoint();
+						delta = getPoint();
 					}
 				};
 				
@@ -120,10 +132,19 @@ public class Sketch extends Canvas {
 			
 			State position = new State() {
 				
-				Transition release = new Release(BUTTON1, ">> movable") {
+				Transition drag = new Drag(">> position") {
 					public void action() {
-						fireEvent("move");
+						Point2D mouse = getPoint();
+						Point2D movement = new Point2D.Double(mouse.getX() - delta.getX() , mouse.getY() - delta.getY());
+						
+						Point relPoint = getLocation();
+						setLocation((int) (relPoint.getX() + movement.getX()), (int) (relPoint.getY() + movement.getY()));
 					}
+				};
+				
+				Transition release = new Release(BUTTON1, ">> movable") {
+					// goes back to the first state
+					public void action() { }
 				};
 				
 			};

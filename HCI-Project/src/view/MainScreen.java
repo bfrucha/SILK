@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 
@@ -29,12 +30,11 @@ import fr.lri.swingstates.sm.transitions.Event;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
 
-public class MainScreen extends JDialog {
+public class MainScreen extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 
 	private Canvas mainCanvas;
-	private SpringLayout mainLayout;
 	private ArrayList<Canvas> sketches;
 	
 	private CStateMachine listenMachine;
@@ -54,13 +54,14 @@ public class MainScreen extends JDialog {
 	public void init() {
 		// initialization
 		sketches = new ArrayList<Canvas>();
-		mainLayout = new SpringLayout();
 		mainCanvas = new Canvas();
 
-		mainCanvas.setLayout(mainLayout);
+		// set layout to null => absolute positioning
+		mainCanvas.setLayout(null);
 		mainCanvas.setBackground(Color.GRAY);
 		
 		getContentPane().add(mainCanvas);
+		
 		
 		// enable sketches creation
 		enableSketchesCreation();
@@ -83,8 +84,13 @@ public class MainScreen extends JDialog {
 					public void action() {
 						initialPoint = getPoint();
 						
-						ghost = mainCanvas.newRectangle(initialPoint.getX(), initialPoint.getY(), 1, 1);
-						ghost.setFilled(false);
+						newSketch = new Sketch(MainScreen.this, "New Sketch", 1, 1);
+						newSketch.setLocation((Point) initialPoint);
+						
+						// ghost = mainCanvas.newRectangle(initialPoint.getX(), initialPoint.getY(), 1, 1);
+						// ghost.setFilled(false);
+						
+						mainCanvas.add(newSketch);
 						mainCanvas.validate();
 					}
 				};
@@ -95,7 +101,7 @@ public class MainScreen extends JDialog {
 				
 				Transition drag = new Drag(">> dimension") {
 					public void action() {
-						ghost.setDiagonal(initialPoint, getPoint());
+						newSketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
 					}
 				};
 				
@@ -103,15 +109,15 @@ public class MainScreen extends JDialog {
 				Transition release = new Release(BUTTON3, ">> creation") {
 					public void action() {
 						// creation of the new sketch
-						newSketch = new Sketch(MainScreen.this, "New Sketch", (int) ghost.getWidth(), (int) ghost.getHeight());
+						//newSketch = new Sketch(MainScreen.this, "New Sketch", (int) ghost.getWidth(), (int) ghost.getHeight());
+						newSketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
 						
 						// put constraints to dipslay at the right position
-						mainLayout.putConstraint(SpringLayout.WEST, newSketch, (int) initialPoint.getX(), SpringLayout.WEST, mainCanvas);
-						mainLayout.putConstraint(SpringLayout.NORTH, newSketch, (int) initialPoint.getY(), SpringLayout.NORTH, mainCanvas);
+						// newSketch.setLocation((Point) initialPoint);
 						
 						// remove ghost and add the new sketch
-						mainCanvas.removeShape(ghost);
-						mainCanvas.add(newSketch);
+						// mainCanvas.removeShape(ghost);
+						// mainCanvas.add(newSketch);
 						mainCanvas.validate();
 					}
 				};
@@ -141,6 +147,6 @@ public class MainScreen extends JDialog {
 	}
 	
 	public static void main(String[] args) {
-		JDialog mainScreen = new MainScreen(1000, 1000);
+		JFrame mainScreen = new MainScreen(1000, 1000);
 	}
 }
