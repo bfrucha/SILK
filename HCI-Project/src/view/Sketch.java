@@ -9,11 +9,17 @@ import java.util.EventObject;
 
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 
+import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.CPolyLine;
+import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.CText;
 import fr.lri.swingstates.canvas.Canvas;
+import fr.lri.swingstates.canvas.transitions.PressOnShape;
+import fr.lri.swingstates.canvas.transitions.ReleaseOnShape;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.StateMachine;
 import fr.lri.swingstates.sm.Transition;
@@ -22,26 +28,32 @@ import fr.lri.swingstates.sm.transitions.Event;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
 
-public class Sketch extends Canvas {
+public class Sketch extends Canvas implements Cloneable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	
-	private MainScreen parent;
-	
-	private Canvas titleBar;
-	private CText titleText;
-	private SpringLayout mainLayout;
-	
 	private static final int TB_HEIGHT = 35;
 	
-	public Sketch(MainScreen parent, String title, int width, int height) {
+	
+	private Canvas parent;
+	
+	// menu variables
+	private Canvas titleBar;
+	private CText titleText;
+	private CImage copyIcon;
+	
+	
+	public Sketch(Canvas parent, String title, int width, int height) {
 		super(width, height);
 		
 		this.parent = parent;
 		titleBar = new Canvas();
+		copyIcon = titleBar.newImage(0, 0, "images/copy-2.png");
+		copyIcon.setOutlined(false);
+		copyIcon.scaleBy(0.9);
+		
 		setSize(width, height);
 		
 		init(title);
@@ -53,10 +65,11 @@ public class Sketch extends Canvas {
 	public void init(String title) {
 		// set absolute layout
 		setLayout(null);
+		setBorder(new LineBorder(MainScreen.BG_COLOR));
 		
 		// fixes title bar at the top of the sketch
 		titleBar.setBackground(Color.RED);
-		titleBar.setLocation(0, 0);
+		titleBar.setLocation(1, 1);
 		
 		titleText = titleBar.newText(10., 10., title);
 		
@@ -66,14 +79,18 @@ public class Sketch extends Canvas {
 		attachDrawSM();
 		
 		// enable sketch to move
-		parent.listen(attachMoveSM());
+		attachMoveSM(titleBar);
+		
+		// enable duplication of sketches
+		attachDuplicateSM(copyIcon);
 	}
 	
 	// resizes title bar with sketch
 	@Override
 	public void setSize(int width, int height) {
 		super.setSize(width, height);
-		titleBar.setSize(width, TB_HEIGHT);
+		titleBar.setSize(width - 2, TB_HEIGHT);
+		copyIcon.translateTo(width - 20, 17);
 		validate();
 	}
 	
@@ -114,8 +131,8 @@ public class Sketch extends Canvas {
 	}
 	
 	// enable sketches to be move in the main canvas
-	private CStateMachine attachMoveSM() {
-		return new CStateMachine(titleBar) {
+	private CStateMachine attachMoveSM(Canvas canvas) {
+		return new CStateMachine(canvas) {
 			
 			// distance to the top-left corner of the canvas
 			Point2D delta;
@@ -124,9 +141,13 @@ public class Sketch extends Canvas {
 				
 				Transition press = new Press(BUTTON1, ">> position") {
 					public void action() {
+						System.out.println("Press on title bar");
 						delta = getPoint();
+						// problem when writing on the sketch on top of another => wrong priority
+						parent.setComponentZOrder(Sketch.this, 0);
+						parent.repaint();
 					}
-				};
+				};	
 				
 			};
 			
@@ -147,6 +168,36 @@ public class Sketch extends Canvas {
 					public void action() { }
 				};
 				
+			};
+		};
+	}
+	
+	// enable duplication of sketches
+	private void attachDuplicateSM(CShape shape) {
+		new CStateMachine(shape) {
+			
+			State beforeClick = new State() {
+				Transition press = new PressOnShape(BUTTON1, ">> clickDone") {
+					public void action() {}
+				};
+			};
+			
+			State clickDone = new State() {
+				Transition release = new ReleaseOnShape(BUTTON1, ">> beforeClick") {
+					public void action() {
+						// clone current sketch
+						Sketch clone = new Sketch(parent, titleText.getText(), getWidth(), getHeight());
+						
+						// offset to create a visual difference between sketches
+						Point2D location = getLocation();
+						clone.setLocation(((int) location.getX()) + 40, ((int) location.getY()) + 40);
+						
+						parent.add(clone);
+						parent.setComponentZOrder(clone, 0);
+						
+						parent.repaint();
+					}
+				};	
 			};
 		};
 	}

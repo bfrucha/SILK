@@ -32,6 +32,7 @@ import fr.lri.swingstates.sm.transitions.Release;
 
 public class MainScreen extends JFrame {
 
+	public static final Color BG_COLOR = Color.gray;
 	private static final long serialVersionUID = 1L;
 
 	private Canvas mainCanvas;
@@ -58,16 +59,13 @@ public class MainScreen extends JFrame {
 
 		// set layout to null => absolute positioning
 		mainCanvas.setLayout(null);
-		mainCanvas.setBackground(Color.GRAY);
+		mainCanvas.setBackground(BG_COLOR);
 		
 		getContentPane().add(mainCanvas);
 		
 		
 		// enable sketches creation
 		enableSketchesCreation();
-		
-		// listen to multiple events
-		listenMachine = attachEventSM();
 	}
 	
 	public void enableSketchesCreation() {
@@ -84,14 +82,12 @@ public class MainScreen extends JFrame {
 					public void action() {
 						initialPoint = getPoint();
 						
-						newSketch = new Sketch(MainScreen.this, "New Sketch", 1, 1);
+						newSketch = new Sketch(mainCanvas, "New Sketch", 1, 1);
 						newSketch.setLocation((Point) initialPoint);
 						
-						// ghost = mainCanvas.newRectangle(initialPoint.getX(), initialPoint.getY(), 1, 1);
-						// ghost.setFilled(false);
-						
 						mainCanvas.add(newSketch);
-						mainCanvas.validate();
+						mainCanvas.setComponentZOrder(newSketch, 0);
+						mainCanvas.repaint();
 					}
 				};
 			};
@@ -112,13 +108,7 @@ public class MainScreen extends JFrame {
 						//newSketch = new Sketch(MainScreen.this, "New Sketch", (int) ghost.getWidth(), (int) ghost.getHeight());
 						newSketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
 						
-						// put constraints to dipslay at the right position
-						// newSketch.setLocation((Point) initialPoint);
-						
-						// remove ghost and add the new sketch
-						// mainCanvas.removeShape(ghost);
-						// mainCanvas.add(newSketch);
-						mainCanvas.validate();
+						mainCanvas.repaint();
 					}
 				};
 				
@@ -126,20 +116,6 @@ public class MainScreen extends JFrame {
 		};
 	}
 	
-	
-	private CStateMachine attachEventSM() {
-		return new CStateMachine(mainCanvas) {
-			
-			State listen = new State() {
-				Transition get = new Event("move", ">> listen") {
-					public void action() {
-						System.out.println("A sketch wants to be moved");
-					}
-				};
-			};
-			
-		};
-	}
 	
 	// makes main canvas listen to events fired by sketches
 	public void listen(CStateMachine machine) {
