@@ -15,6 +15,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 
+import controller.SketchController;
+import model.SketchModel;
 import fr.lri.swingstates.canvas.CElement;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
@@ -68,11 +70,17 @@ public class MainScreen extends JFrame {
 		enableSketchesCreation();
 	}
 	
+	// create a new Sketch with basic attributes
+	public SketchController createSketch(Point tlc) {
+		SketchModel model = new SketchModel("New Sketch", tlc, new Dimension(1, 1));
+		SketchView view = new SketchView(model, mainCanvas);
+		return new SketchController(model, view);
+	}
+	
 	public void enableSketchesCreation() {
 		CStateMachine sm = new CStateMachine(mainCanvas) {
 
-			Sketch newSketch;
-			CRectangle ghost;
+			SketchController sketch;
 			Point2D initialPoint;
 			
 			// creation of the new sketch
@@ -82,11 +90,8 @@ public class MainScreen extends JFrame {
 					public void action() {
 						initialPoint = getPoint();
 						
-						newSketch = new Sketch(mainCanvas, "New Sketch", 1, 1);
-						newSketch.setLocation((Point) initialPoint);
+						sketch = createSketch((Point) initialPoint);
 						
-						mainCanvas.add(newSketch);
-						mainCanvas.setComponentZOrder(newSketch, 0);
 						mainCanvas.repaint();
 					}
 				};
@@ -97,7 +102,7 @@ public class MainScreen extends JFrame {
 				
 				Transition drag = new Drag(">> dimension") {
 					public void action() {
-						newSketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
+						sketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
 					}
 				};
 				
@@ -106,7 +111,7 @@ public class MainScreen extends JFrame {
 					public void action() {
 						// creation of the new sketch
 						//newSketch = new Sketch(MainScreen.this, "New Sketch", (int) ghost.getWidth(), (int) ghost.getHeight());
-						newSketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
+						sketch.setSize((int) (getPoint().getX() - initialPoint.getX()), (int) (getPoint().getY() - initialPoint.getY()));
 						
 						mainCanvas.repaint();
 					}
@@ -114,12 +119,6 @@ public class MainScreen extends JFrame {
 				
 			};
 		};
-	}
-	
-	
-	// makes main canvas listen to events fired by sketches
-	public void listen(CStateMachine machine) {
-		machine.addStateMachineListener(listenMachine);
 	}
 	
 	public static void main(String[] args) {
