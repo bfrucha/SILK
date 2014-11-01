@@ -2,9 +2,12 @@ package view;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 
+import javax.swing.JButton;
 import javax.swing.border.LineBorder;
 
+import controller.ProjectController;
 import model.SketchModel;
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.CPolyLine;
@@ -23,30 +26,21 @@ public class SketchView extends Canvas {
 	// model information are taken from
 	private SketchModel model;
 	
-	// canvas from which the sketch will be drawn
-	private Canvas parent;
-	
 	// menu variables
-	private Canvas titleBar;
-	private CText titleText;
-	private CImage copyIcon;
+	private TitleBar titleBar;
 	
 	// bottom-right corner of the sketch => resize
 	private CImage corner;
 	
-	public SketchView(SketchModel model, Canvas parent) {
+	public SketchView(SketchModel model) {
 		super();
 		
 		this.model = model;
-		this.parent = parent;
-		parent.add(this);
 		
-		titleBar = new Canvas();
-		copyIcon = titleBar.newImage(0, 0, "images/copy-2.png");
-		copyIcon.setOutlined(false);
-		copyIcon.scaleBy(0.9);
-		titleText = titleBar.newText(0, 0, model.getName());
+		// initialization of title bar and its components
+		titleBar = new TitleBar();
 		
+		// icon at the bottom-right corner of the sketch
 		corner = newImage(0, 0, "images/corner.png");
 		corner.setOutlined(false);
 		
@@ -62,19 +56,16 @@ public class SketchView extends Canvas {
 	public void init() {
 		// set absolute layout
 		setLayout(null);
-		setBorder(new LineBorder(MainScreen.BG_COLOR));
+		setBorder(new LineBorder(ProjectView.BG_COLOR));
 		
 		// fixes title bar at the top of the sketch
-		titleBar.setBackground(Color.RED);
-		titleBar.setLocation(1, 1);
-		titleText.translateTo(40., 20.);
-		
+		titleBar.init();		
 		add(titleBar);
 	}
 	
-	// get the graphical parent of this Sketch
-	public Canvas getGraphicalParent() {
-		return parent;
+	// get CText representing sketch's title
+	public CText getTitle() {
+		return titleBar.getTitle();
 	}
 	
 	// get Sketch view's title bar
@@ -84,7 +75,7 @@ public class SketchView extends Canvas {
 	
 	// give a shape that will be used as a button to copy the sketch
 	public CShape getCopyButton() {
-		return copyIcon;
+		return titleBar.getCopyIcon();
 	}
 	
 	// give a shape that will be used as a button to resize the sketch
@@ -92,20 +83,12 @@ public class SketchView extends Canvas {
 		return corner;
 	}
 	
-	// put on top of all other components from parent
-	public void putOnTop() {
-		parent.setComponentZOrder(this, 0);
-		parent.repaint();
-	}
-	
 	public void update() {
 		Dimension size = model.getSize();
 		setSize(size);
 		setLocation(model.getRefPoint());
 		
-		titleBar.setSize(size.width - 2, TB_HEIGHT);
-		copyIcon.translateTo(size.width - 20, 17);
-		titleText.setText(model.getName());
+		titleBar.update(size.width);
 		
 		corner.translateTo(size.width - 14, size.height - 14);
 		
@@ -118,5 +101,47 @@ public class SketchView extends Canvas {
 		
 		corner.aboveAll();
 		repaint();
+	}
+	
+	
+	private class TitleBar extends Canvas {
+
+		private CText title;
+		private CImage copyIcon;
+		
+		public TitleBar() {
+			super();
+			setLayout(new FlowLayout(FlowLayout.LEFT));
+			
+			copyIcon = newImage(0, 0, "images/copy-2.png");
+			copyIcon.setOutlined(false);
+			copyIcon.scaleBy(0.9);
+			
+			title = newText(0, 0, model.getName());
+		}
+		
+		// initialization of the title bar
+		public void init() {
+			setBackground(Color.RED);
+			setLocation(1, 1);
+			title.setReferencePointToBaseline().translateTo(7, 20);
+		}
+		
+		// get component containing sketch's title
+		public CText getTitle() {
+			return title;
+		}
+		
+		// get copy icon
+		public CImage getCopyIcon() {
+			return copyIcon;
+		}
+		
+		// update relative to the new width of the sketch
+		public void update(int width) {
+			setSize(width - 2, TB_HEIGHT);
+			copyIcon.translateTo(width - 20, 17);
+			title.setText(model.getName());
+		}
 	}
 }

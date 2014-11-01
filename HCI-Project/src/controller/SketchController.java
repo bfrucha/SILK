@@ -1,44 +1,73 @@
 package controller;
 
+import java.awt.AWTException;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
+
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.LineBorder;
 
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
+import fr.lri.swingstates.canvas.CText;
+import fr.lri.swingstates.canvas.CWidget;
 import fr.lri.swingstates.canvas.Canvas;
 import fr.lri.swingstates.canvas.transitions.LeaveOnShape;
 import fr.lri.swingstates.canvas.transitions.PressOnShape;
 import fr.lri.swingstates.canvas.transitions.ReleaseOnShape;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.Transition;
+import fr.lri.swingstates.sm.transitions.Click;
 import fr.lri.swingstates.sm.transitions.Drag;
+import fr.lri.swingstates.sm.transitions.Enter;
+import fr.lri.swingstates.sm.transitions.KeyPress;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
+import view.ProjectView;
 import view.SketchView;
 import model.SketchModel;
 
 public class SketchController {
 
+	private ProjectController project;
+	
 	private SketchModel model;
 	private SketchView view;
 	
+	private Dimension minimalDimension = new Dimension(100, 100);
+	private LineBorder VALIDE_BORDER = new LineBorder(ProjectView.BG_COLOR);
+	private LineBorder INVALIDE_BORDER = new LineBorder(Color.red);
+	
 	private CStateMachine drawMachine;
 	private CStateMachine moveMachine;
+	private CStateMachine nameMachine;
 	private CStateMachine duplicateMachine;
 	private CStateMachine resizeMachine;
 	
 	
-	public SketchController(SketchModel model, SketchView view) {
+	public SketchController(ProjectController parent, SketchModel model, SketchView view) {
+		this.project = parent;
+
 		this.model = model;
 		this.view = view;
+		// set border to red => not valide dimension
+		view.setBorder(INVALIDE_BORDER);
 		
 		// enable drawing on the Sketch
 		drawMachine = attachDrawSM(view);
 		
 		// enable Sketch's movement
 		moveMachine = attachMoveSM(view.getTitleBar());
+		
+		// enable direct editing of the Sketch's name
+		nameMachine = attachNameSM(view.getTitle());
 		
 		// enable Sketches duplication
 		duplicateMachine = attachDuplicateSM(view.getCopyButton());
@@ -47,10 +76,15 @@ public class SketchController {
 		resizeMachine = attachResizeSM(view.getResizeButton());
 	}
 	
+	// access to a sketch's view from its controller
+	public SketchView getView() {
+		return view;
+	}
+	
 	// change the relative point of the sketch
 	public void setLocation(Point tlc) {
 		model.move(tlc);
-		view.putOnTop();
+		putOnTop();
 		view.update();
 	}
 	
@@ -59,20 +93,39 @@ public class SketchController {
 		setSize(new Dimension(width, height));
 	}
 	
+	// change size of the sketch and its border according to minimal dimension accepted
 	public void setSize(Dimension dimension) {
-		model.setSize(dimension);
+		model.setSize(dimension);	
 		view.update();
+		if(hasValideDimension()) {
+			view.setBorder(VALIDE_BORDER);
+		} else {
+			view.setBorder(INVALIDE_BORDER);
+		}
 	}
+	
+	// verifies the sketch's dimension
+	public boolean hasValideDimension() {
+		Dimension current = model.getSize();
+		return minimalDimension.width <= current.width && minimalDimension.height <= current.height;
+	}
+	
+	// ask project controller to put this sketch on top of the others
+	public void putOnTop() {
+		project.putOnTop(this);
+	}
+	
 	
 	// enable draw on the sketch
 	private CStateMachine attachDrawSM(Canvas canvas) {
 		return new CStateMachine(canvas) {
 			
-			CPolyLine line;
+			CPolyLine line = null;
 			
 			State beforeDrawing = new State() {
 				Transition press = new Press(BUTTON1, ">> drawing") {
 					public void action() {
+						project.putOnTop(SketchController.this);
 						line = new CPolyLine(getPoint());
 						line.setFilled(false);
 						model.addShape(line);
@@ -82,7 +135,7 @@ public class SketchController {
 			};
 			
 			State drawing = new State() {
-				Transition move = new Drag(">> drawing") {
+				Transition move = new Drag() {
 					public void action() {
 						line.lineTo(getPoint());
 					}
@@ -109,7 +162,7 @@ public class SketchController {
 					public void action() {
 						delta = getPoint();
 						// problem when writing on the sketch on top of another => wrong priority
-						view.putOnTop();
+						putOnTop();
 					}
 				};	
 				
@@ -125,7 +178,6 @@ public class SketchController {
 						Point relPoint = model.getRefPoint();
 						model.moveTo((int) (relPoint.getX() + movement.getX()), (int) (relPoint.getY() + movement.getY()));
 						view.update();
-						
 					}
 					
 				};
@@ -138,6 +190,73 @@ public class SketchController {
 		};
 	}
 	
+	
+	// enable sketch's name changing
+	private CStateMachine attachNameSM(CText title) {
+		return new CStateMachine(title) {
+			
+			// variables used to do the change
+			Canvas titleBar = view.getTitleBar();
+			CText title = view.getTitle();
+			JTextField ghost;
+			
+			State standing = new State() {
+				Transition click = new Click(BUTTON1, ">> editing") {
+					// fire transition only on a double click
+					public boolean guard() {
+						return getMouseEvent().getClickCount() >= 2;
+					}
+				};
+			};
+			
+			State editing = new State() {
+				public void enter() {
+					title.remove();
+					
+					ghost = new JTextField(title.getText(), 30);
+					ghost.addKeyListener(new KeyListener() {
+						@Override
+						public void keyReleased(KeyEvent event) {
+							switch(event.getKeyCode()) {
+							case 10: 
+								validateTitle(); break;
+							case 27:
+								cancelTitle(); break;
+							} 
+						}
+						
+						@Override
+						public void keyTyped(KeyEvent event) {}
+
+						@Override
+						public void keyPressed(KeyEvent arg0) {}
+						
+					});
+					titleBar.add(ghost);
+					titleBar.validate();
+				}
+				
+				Transition validate = new Click(BUTTON1, ">> standing") {
+					public void action() {
+						cancelTitle();
+					}
+				};
+			};
+			
+			private void validateTitle() {
+				model.changeName(ghost.getText());
+				titleBar.remove(ghost);
+				view.update();
+				titleBar.addShape(title);
+			}
+			
+			private void cancelTitle() {
+				titleBar.remove(ghost);
+				titleBar.addShape(title);
+			}
+		};
+	}
+	
 	// enable duplication of sketches
 	private CStateMachine attachDuplicateSM(CShape shape) {
 		return new CStateMachine(shape) {
@@ -145,13 +264,7 @@ public class SketchController {
 			State beforeClick = new State() {
 				Transition press = new PressOnShape(BUTTON1, ">> clickDone") {
 					public void action() {
-						SketchModel cloneModel = new SketchModel(model);
-						SketchView cloneView = new SketchView(cloneModel, view.getGraphicalParent());
-						SketchController cloneController = new SketchController(cloneModel, cloneView);
-						
-						cloneModel.moveBy(40, 40);
-						cloneView.putOnTop();
-						cloneView.update();
+						project.duplicateSketch(model).putOnTop();
 					}
 				};
 			};
@@ -189,18 +302,22 @@ public class SketchController {
 						int width = (int) (getPoint().getX() - lastPoint.getX());
 						int height = (int) (getPoint().getY() - lastPoint.getY());
 
-						lastPoint = getPoint();
-						
 						Dimension size = model.getSize();
-						size.width += width;
-						size.height += height;
+						setSize(size.width + width, size.height + height);
 						
 						view.update();
+						
+						lastPoint = getPoint();
 					};
 				};
 				
 				Transition release = new Release(BUTTON1, ">> beforeDrag") {
 					public void action() {
+						if(!hasValideDimension()) {
+							setSize(minimalDimension);
+						}
+						
+						drawMachine.reset();
 						drawMachine.resume();
 					}
 				};
