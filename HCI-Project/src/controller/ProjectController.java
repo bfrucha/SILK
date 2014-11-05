@@ -78,21 +78,22 @@ public class ProjectController {
 	
 	
 	// get sketch containing the given point
-	public SketchView getSketchAt(Point p) {
-		SketchView sketchView = null;
+	public SketchController getSketchAt(Point2D p) {
+		SketchController sketch= null;
 		
 		ArrayList<SketchController> sketches = model.getSketches();
 		int index = 0;
-		while(sketchView == null && index < sketches.size()) {
-			SketchView tmp = sketches.get(index++).getView();
+		while(sketch == null && index < sketches.size()) {
+			SketchController tmp = sketches.get(index++); 
+			SketchView tmpView = tmp.getView();
 			
 			// need to change coordinates (intrinsec sketch coordinates)
-			Point location = tmp.getLocation();
-			if(tmp.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))) {
-				sketchView = tmp;
+			Point2D location = tmpView.getLocation();
+			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))) {
+				sketch = tmp;
 			}
 		}
-		return sketchView;
+		return sketch;
 	}
 	
 	
@@ -152,7 +153,7 @@ public class ProjectController {
 			
 			Canvas calque;
 			CPolyLine actionGhost;
-			SketchView caught;
+			SketchController caught;
 			
 			State noAction = new State() {
 				Transition begin = new Press(BUTTON1, ">> selection") {
@@ -166,7 +167,6 @@ public class ProjectController {
 						
 						view.add(calque);
 						view.setComponentZOrder(calque, 0);
-						view.validate();
 					}
 				};
 			};
@@ -174,23 +174,35 @@ public class ProjectController {
 			State selection = new State() {
 				Transition over = new Drag() {
 					public void action() {
-						actionGhost.lineTo(getPoint());
+						Point2D mouse = getPoint();
+						
+						actionGhost.lineTo(mouse);
 						
 						// if the line crosses a sketch's view, we catch it
-						//caught = getSketchAt((Point) getPoint());
-						//if(caught != null) {//&& caught.contains(getPoint()) == caught.getTitle()) {
-							/* TODO */
-						//}
-						
-						view.repaint();
+						if(caught == null) {
+							caught = getSketchAt(mouse);
+							
+							if(caught != null) {
+								if(!caught.isSelected(mouse)) {
+									caught = null;
+								} else {
+									actionGhost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
+								}
+							}
+						}
 					}
 				};
 				
 				Transition validate = new Release(BUTTON1, ">> noAction") {
 					public void action() {
+						// delete the selected sketch
+						if(caught != null) {
+							model.removeSketch(caught);
+							view.remove(caught.getView());
+							caught = null;
+						}
 						calque.removeShape(actionGhost);
 						view.remove(calque);
-						view.validate();
 						view.repaint();
 					}
 				};

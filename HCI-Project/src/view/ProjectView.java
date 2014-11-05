@@ -18,7 +18,7 @@ public class ProjectView extends Canvas {
 	private static final long serialVersionUID = 1L;
 	public static final Color BG_COLOR = Color.gray;
 	
-	public static final Color ACTION_COLOR = Color.white;
+	public static final Color ACTION_COLOR = Color.blue;
 	public static final Color SUPPRESSION_ACTION_COLOR = Color.red;
 	
 	private ProjectModel model;
@@ -33,11 +33,13 @@ public class ProjectView extends Canvas {
 		setLayout(null);
 		
 		calque = new Canvas();
-		calque.setSize(1000, 1000);
+		calque.setSize(width, height);
 		calque.setBackground(new Color(0, 0, 0, 0));
+		calque.setOpaque(false);
 		
 		setBackground(BG_COLOR);
 	}
+	
 	
 	// get the canvas where will be drawn all user's commands
 	public Canvas getCalque() {

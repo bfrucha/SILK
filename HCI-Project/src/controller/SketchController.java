@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Robot;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
@@ -42,8 +44,6 @@ public class SketchController {
 	private SketchView view;
 	
 	private Dimension minimalDimension = new Dimension(100, 100);
-	private LineBorder VALIDE_BORDER = new LineBorder(ProjectView.BG_COLOR);
-	private LineBorder INVALIDE_BORDER = new LineBorder(Color.red);
 	
 	private CStateMachine drawMachine;
 	private CStateMachine moveMachine;
@@ -58,7 +58,9 @@ public class SketchController {
 		this.model = model;
 		this.view = view;
 		// set border to red => not valide dimension
-		view.setBorder(INVALIDE_BORDER);
+		if(!hasValideDimension()) {
+			view.setBorder(SketchView.INVALIDE_BORDER);
+		}
 		
 		// enable drawing on the Sketch
 		drawMachine = attachDrawSM(view);
@@ -98,9 +100,9 @@ public class SketchController {
 		model.setSize(dimension);	
 		view.update();
 		if(hasValideDimension()) {
-			view.setBorder(VALIDE_BORDER);
+			view.setBorder(SketchView.VALIDE_BORDER);
 		} else {
-			view.setBorder(INVALIDE_BORDER);
+			view.setBorder(SketchView.INVALIDE_BORDER);
 		}
 	}
 	
@@ -115,6 +117,15 @@ public class SketchController {
 		project.putOnTop(this);
 	}
 	
+
+	// tell whether this sketch is selected by an user's action
+	public boolean isSelected(Point2D point) {
+		Point location = view.getLocation();
+		
+		point.setLocation(point.getX() - location.getX(), point.getY() - location.getY());
+		
+		return view.onTitle(point);
+	}
 	
 	// enable draw on the sketch
 	private CStateMachine attachDrawSM(Canvas canvas) {
@@ -162,6 +173,7 @@ public class SketchController {
 					public void action() {
 						delta = getPoint();
 						// problem when writing on the sketch on top of another => wrong priority
+						
 						putOnTop();
 					}
 				};	
@@ -213,7 +225,8 @@ public class SketchController {
 				public void enter() {
 					title.remove();
 					
-					ghost = new JTextField(title.getText(), 30);
+					ghost = new JTextField(title.getText(), view.getWidth()/15);
+					
 					ghost.addKeyListener(new KeyListener() {
 						@Override
 						public void keyReleased(KeyEvent event) {

@@ -3,6 +3,11 @@ package view;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.geom.Point2D;
 
 import javax.swing.JButton;
 import javax.swing.border.LineBorder;
@@ -11,6 +16,7 @@ import controller.ProjectController;
 import model.SketchModel;
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.CPolyLine;
+import fr.lri.swingstates.canvas.CRectangle;
 import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CText;
 import fr.lri.swingstates.canvas.Canvas;
@@ -22,6 +28,9 @@ public class SketchView extends Canvas {
 	 */
 	private static final long serialVersionUID = 1L;
 	private static final int TB_HEIGHT = 35;
+
+	public static final LineBorder VALIDE_BORDER = new LineBorder(ProjectView.BG_COLOR);
+	public static final LineBorder INVALIDE_BORDER = new LineBorder(Color.red);
 	
 	// model information are taken from
 	private SketchModel model;
@@ -83,10 +92,18 @@ public class SketchView extends Canvas {
 		return corner;
 	}
 	
+	
+	// returns true if the given point is on sketch's title
+	public boolean onTitle(Point2D point) {
+		return titleBar.getTitle().contains(point) != null;
+	}
+	
+	
 	public void update() {
 		Dimension size = model.getSize();
-		setSize(size);
+		
 		setLocation(model.getRefPoint());
+		setSize(size);
 		
 		titleBar.update(size.width);
 		
@@ -104,14 +121,24 @@ public class SketchView extends Canvas {
 	}
 	
 	
+	
+	/* PRIVATE CLASS */
 	private class TitleBar extends Canvas {
 
+		// simulation of a background to have a gradient
+		private CRectangle bg;
+		private final GradientPaint bgPaint = new GradientPaint(0, 0, new Color(100, 100, 100), 0, TB_HEIGHT, new Color(200, 200, 200));
+		
 		private CText title;
 		private CImage copyIcon;
 		
 		public TitleBar() {
 			super();
 			setLayout(new FlowLayout(FlowLayout.LEFT));
+			
+			bg = newRectangle(0, 0, 1, 35);
+			bg.setOutlined(false);
+			bg.setFillPaint(bgPaint);
 			
 			copyIcon = newImage(0, 0, "images/copy-2.png");
 			copyIcon.setOutlined(false);
@@ -122,7 +149,6 @@ public class SketchView extends Canvas {
 		
 		// initialization of the title bar
 		public void init() {
-			setBackground(Color.RED);
 			setLocation(1, 1);
 			title.setReferencePointToBaseline().translateTo(7, 20);
 		}
@@ -140,6 +166,8 @@ public class SketchView extends Canvas {
 		// update relative to the new width of the sketch
 		public void update(int width) {
 			setSize(width - 2, TB_HEIGHT);
+			bg.scaleTo(2, 1);
+			bg.scaleBy(width, 1);
 			copyIcon.translateTo(width - 20, 17);
 			title.setText(model.getName());
 		}
