@@ -4,15 +4,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.geom.Point2D;
 
-import javax.swing.JButton;
 import javax.swing.border.LineBorder;
 
-import controller.ProjectController;
 import model.SketchModel;
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.CPolyLine;
@@ -136,6 +131,8 @@ public class SketchView extends Canvas {
 			super();
 			setLayout(new FlowLayout(FlowLayout.LEFT));
 			
+			setBorder(new LineBorder(Color.black, 2));
+			
 			bg = newRectangle(0, 0, 1, 35);
 			bg.setOutlined(false);
 			bg.setFillPaint(bgPaint);
@@ -149,7 +146,6 @@ public class SketchView extends Canvas {
 		
 		// initialization of the title bar
 		public void init() {
-			setLocation(1, 1);
 			title.setReferencePointToBaseline().translateTo(7, 20);
 		}
 		
@@ -165,7 +161,7 @@ public class SketchView extends Canvas {
 		
 		// update relative to the new width of the sketch
 		public void update(int width) {
-			setSize(width - 2, TB_HEIGHT);
+			setSize(width, TB_HEIGHT);
 			bg.scaleTo(2, 1);
 			bg.scaleBy(width, 1);
 			copyIcon.translateTo(width - 20, 17);

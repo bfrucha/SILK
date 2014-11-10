@@ -1,38 +1,26 @@
 package controller;
 
-import java.awt.AWTException;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Robot;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
 
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
 
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.CText;
-import fr.lri.swingstates.canvas.CWidget;
 import fr.lri.swingstates.canvas.Canvas;
-import fr.lri.swingstates.canvas.transitions.LeaveOnShape;
 import fr.lri.swingstates.canvas.transitions.PressOnShape;
 import fr.lri.swingstates.canvas.transitions.ReleaseOnShape;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.Transition;
 import fr.lri.swingstates.sm.transitions.Click;
 import fr.lri.swingstates.sm.transitions.Drag;
-import fr.lri.swingstates.sm.transitions.Enter;
-import fr.lri.swingstates.sm.transitions.KeyPress;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
-import view.ProjectView;
 import view.SketchView;
 import model.SketchModel;
 
@@ -125,6 +113,25 @@ public class SketchController {
 		point.setLocation(point.getX() - location.getX(), point.getY() - location.getY());
 		
 		return view.onTitle(point);
+	}
+	
+	// pause all machines this sketch is attached to
+	public void suspendMachines() {
+		drawMachine.suspend();
+		moveMachine.suspend();
+		nameMachine.suspend();
+		duplicateMachine.suspend();
+		resizeMachine.suspend();
+	}
+	
+	
+	// pause all machines this sketch is attached to
+	public void resumeMachines() {
+		drawMachine.resume();
+		moveMachine.resume();
+		nameMachine.resume();
+		duplicateMachine.resume();
+		resizeMachine.resume();
 	}
 	
 	// enable draw on the sketch
