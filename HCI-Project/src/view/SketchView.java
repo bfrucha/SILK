@@ -30,6 +30,9 @@ public class SketchView extends Canvas {
 	// model information are taken from
 	private SketchModel model;
 	
+	// all recognized widgets have this tag
+	private WidgetTag widgetTag = new WidgetTag();
+	
 	// menu variables
 	private TitleBar titleBar;
 	
@@ -93,6 +96,10 @@ public class SketchView extends Canvas {
 		return titleBar.getTitle().contains(point) != null;
 	}
 	
+	// call this method when a widget is recognized
+	public void recognizedWidget(CShape shape) {
+		shape.addTag(widgetTag);
+	}
 	
 	public void update() {
 		Dimension size = model.getSize();

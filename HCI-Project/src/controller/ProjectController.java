@@ -8,8 +8,12 @@ import java.util.ArrayList;
 
 import exception.InvalidActionException;
 import fr.lri.swingstates.canvas.CPolyLine;
+import fr.lri.swingstates.canvas.CRectangle;
+import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.Canvas;
+import fr.lri.swingstates.gestures.Gesture;
+import fr.lri.swingstates.gestures.dollar1.Dollar1Classifier;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.Transition;
 import fr.lri.swingstates.sm.transitions.Drag;
@@ -29,15 +33,17 @@ public class ProjectController {
 	public static final int DRAW = 0;
 	public static final int ERASE = 1;
 	private int currentMode = WIDGETS_MODE;
-	private int[] actions = {DRAW, DRAW, DRAW};
 	
 	private ProjectModel model;
 	private ProjectView view;
 	
 	private CStateMachine creationMachine;
 	private CStateMachine suppressionMachine;
-	private CStateMachine annotationsMachine;
-	private CStateMachine interactionsMachine;
+	private CStateMachine annotationsDrawMachine;
+	private CStateMachine annotationsDeleteMachine;
+	private CStateMachine interactionsDrawMachine;
+	private CStateMachine interactionsDeleteMachine;
+	
 	
 	public ProjectController(ProjectModel model, ProjectView view) {
 		this.model = model;
@@ -52,193 +58,16 @@ public class ProjectController {
 		suppressionMachine = attachSuppressionSM();
 		
 		// enable annotations writing on top of the project
-		annotationsMachine = initAnnotationsMode();
+		annotationsDrawMachine = annotationsDrawSM();
+		annotationsDeleteMachine = annotationsDeleteSM();
 		
 		// enable interactions craetion between sketches
-		interactionsMachine = initInteractionsMode();
-		
+		interactionsDrawMachine = interactionsDrawSM();
+		interactionsDeleteMachine = interactionsDeleteSM();
 	}
 	
 	public ProjectView getView() {
 		return view;
-	}
-	
-	public void keySM() {
-		new CStateMachine(view) {
-			State listen = new State() {
-				Transition key = new KeyPress() {
-					public void action() {
-						switch(getChar()) {
-						case 'a': case 'A': changeMode(ANNOTATIONS_MODE); break;
-						case 'i': case 'I': changeMode(INTERACTIONS_MODE); break;
-						case 'w': case'W': changeMode(WIDGETS_MODE); break;
-						}
-					}
-				};
-			};
-		};
-	}
-	
-	// enable annotations writing on top of the project's view
-	public CStateMachine initAnnotationsMode() {
-		return new CStateMachine(view.getAnnotationsView()) {
-			
-			Canvas canvas = view.getAnnotationsView();
-			CPolyLine annotation;
-			
-			State wait = new State() {
-				Transition press = new Press(BUTTON1, ">> drawing") {
-					public void action() {
-						annotation = canvas.newPolyLine(getPoint());
-						annotation.setFilled(false);
-						annotation.setStroke(new BasicStroke(2));
-					}
-				};
-			};
-			
-			State drawing = new State() {
-				Transition drag = new Drag() {
-					public void action() {
-						annotation.lineTo(getPoint());
-					}
-				};
-				
-				Transition release = new Release(">> wait") {
-					public void action() {
-						annotation.lineTo(getPoint());
-					}
-				};
-			};
-		};
-	}
-	
-	// enlable interactions creation between sketches
-	public CStateMachine initInteractionsMode() {
-		return new CStateMachine(view.getInteractionsView()) {
-			
-			Canvas canvas = view.getInteractionsView();
-			CPolyLine annotation;
-			
-			State wait = new State() {
-				Transition press = new Press(BUTTON1, ">> drawing") {
-					public void action() {
-						annotation = canvas.newPolyLine(getPoint());
-						annotation.setFilled(false);
-						annotation.setStroke(new BasicStroke(2));
-					}
-				};
-			};
-			
-			State drawing = new State() {
-				Transition drag = new Drag() {
-					public void action() {
-						annotation.lineTo(getPoint());
-					}
-				};
-				
-				Transition release = new Release(">> wait") {
-					public void action() {
-						annotation.lineTo(getPoint());
-					}
-				};
-			};
-		};
-	}
-	
-	// change current mode for this project
-	public void changeMode(int mode) {
-		currentMode = mode;
-		
-		if(currentMode == INTERACTIONS_MODE || currentMode == ANNOTATIONS_MODE) {
-			System.out.println("Change to Annotations/Interactions mode");
-			suspendMachines();
-		} else {
-			System.out.println("Change to Widgets mode");
-			resumeMachines();
-		}
-		
-		view.changeMode(currentMode);
-	}	
-	
-	
-	// change the action (DRAW, ERASE) depending on the current mode
-	public void changeAction(int action) throws InvalidActionException {
-		if(action != DRAW && action != ERASE) { throw new InvalidActionException(); } 
-		
-		actions[currentMode] = action;
-	}
-	
-	// create a new Sketch with basic attributes
-	public SketchController createSketch(Point tlc) {
-		SketchModel sketchModel = new SketchModel("New Sketch", tlc, new Dimension(1, 1));
-		SketchView sketchView = new SketchView(sketchModel);
-		SketchController sketchController = new SketchController(this, sketchModel, sketchView); 
-		
-		model.addSketch(sketchController);
-		view.update();
-		
-		return sketchController;
-	}
-	
-	// duplicate from an existing sketch
-	public SketchController duplicateSketch(SketchModel sketchModel) {
-		SketchModel cloneModel = new SketchModel(sketchModel);
-		SketchView cloneView = new SketchView(cloneModel);
-		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
-		
-		cloneModel.moveBy(40, 40);
-		cloneView.update();
-		
-		model.addSketch(cloneController);
-		view.update();
-		
-		return cloneController;
-	}
-	
-	// put the sketch on top of the others
-	public void putOnTop(SketchController sketch) {
-		view.setComponentZOrder(sketch.getView(), 0);
-		view.repaint();
-	}
-	
-	
-	// get sketch containing the given point
-	public SketchController getSketchAt(Point2D p) {
-		SketchController sketch= null;
-		
-		ArrayList<SketchController> sketches = model.getSketches();
-		int index = 0;
-		while(sketch == null && index < sketches.size()) {
-			SketchController tmp = sketches.get(index++); 
-			SketchView tmpView = tmp.getView();
-			
-			// need to change coordinates (intrinsec sketch coordinates)
-			Point2D location = tmpView.getLocation();
-			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))) {
-				sketch = tmp;
-			}
-		}
-		return sketch;
-	}
-	
-	// suspend all state machines except annotations and interactions ones
-	public void suspendMachines() {
-		creationMachine.suspend();
-		suppressionMachine.suspend();
-		
-		for(SketchController sketch: model.getSketches()) {
-			sketch.suspendMachines();
-		}
-	}
-	
-	// resume all state machines 
-	public void resumeMachines() {
-		creationMachine.resume();
-		suppressionMachine.resume();
-		
-		for(SketchController sketch: model.getSketches()) {
-			sketch.resumeMachines();
-		}
 	}
 	
 	
@@ -356,6 +185,242 @@ public class ProjectController {
 						view.repaint();
 					}
 				};
+			};
+		};
+	}
+	
+	public void keySM() {
+		new CStateMachine(view) {
+			State listen = new State() {
+				Transition key = new KeyPress() {
+					public void action() {
+						switch(getChar()) {
+						case 'a': case 'A': changeMode(ANNOTATIONS_MODE); break;
+						case 'i': case 'I': changeMode(INTERACTIONS_MODE); break;
+						case 'w': case'W': changeMode(WIDGETS_MODE); break;
+						}
+					}
+				};
+			};
+		};
+	}
+	
+	// enable annotations writing on top of the project's view
+	public CStateMachine annotationsDrawSM() {
+		return new DrawSM(view.getAnnotationsView());
+	}
+	
+	// enable delete gesture in annotation canvas
+	public CStateMachine annotationsDeleteSM() {
+		return new DeleteSM(view.getAnnotationsView());	
+	}
+	
+	
+	// enlable interactions creation between sketches
+	public CStateMachine interactionsDrawSM() {
+		return new DrawSM(view.getInteractionsView());
+	}
+	
+	// enable delete gesture in interactions canvas
+	public CStateMachine interactionsDeleteSM() {
+		return new DeleteSM(view.getInteractionsView());
+	}
+	
+	
+	// change current mode for this project
+	public void changeMode(int mode) {
+		currentMode = mode;
+		
+		if(currentMode == INTERACTIONS_MODE || currentMode == ANNOTATIONS_MODE) {
+			System.out.println("Change to Annotations/Interactions mode");
+			suspendMachines();
+		} else {
+			System.out.println("Change to Widgets mode");
+			resumeMachines();
+		}
+		
+		view.changeMode(currentMode);
+	}
+	
+	// create a new Sketch with basic attributes
+	public SketchController createSketch(Point tlc) {
+		SketchModel sketchModel = new SketchModel("New Sketch", tlc, new Dimension(1, 1));
+		SketchView sketchView = new SketchView(sketchModel);
+		SketchController sketchController = new SketchController(this, sketchModel, sketchView); 
+		
+		model.addSketch(sketchController);
+		view.update();
+		
+		return sketchController;
+	}
+	
+	// duplicate from an existing sketch
+	public SketchController duplicateSketch(SketchModel sketchModel) {
+		SketchModel cloneModel = new SketchModel(sketchModel);
+		SketchView cloneView = new SketchView(cloneModel);
+		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
+		
+		cloneModel.moveBy(40, 40);
+		cloneView.update();
+		
+		model.addSketch(cloneController);
+		view.update();
+		
+		return cloneController;
+	}
+	
+	// put the sketch on top of the others
+	public void putOnTop(SketchController sketch) {
+		view.setComponentZOrder(sketch.getView(), 0);
+		view.repaint();
+	}
+	
+	
+	// get sketch containing the given point
+	public SketchController getSketchAt(Point2D p) {
+		SketchController sketch= null;
+		
+		ArrayList<SketchController> sketches = model.getSketches();
+		int index = 0;
+		while(sketch == null && index < sketches.size()) {
+			SketchController tmp = sketches.get(index++); 
+			SketchView tmpView = tmp.getView();
+			
+			// need to change coordinates (intrinsec sketch coordinates)
+			Point2D location = tmpView.getLocation();
+			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))) {
+				sketch = tmp;
+			}
+		}
+		return sketch;
+	}
+	
+	// suspend all state machines except annotations and interactions ones
+	public void suspendMachines() {
+		creationMachine.suspend();
+		suppressionMachine.suspend();
+		
+		for(SketchController sketch: model.getSketches()) {
+			sketch.suspendMachines();
+		}
+	}
+	
+	// resume all state machines 
+	public void resumeMachines() {
+		creationMachine.resume();
+		suppressionMachine.resume();
+		
+		for(SketchController sketch: model.getSketches()) {
+			sketch.resumeMachines();
+		}
+	}
+	
+	
+	
+	
+	
+	
+	// draw lines on canvas
+	private class DrawSM extends CStateMachine {
+	 	Canvas view;
+		CPolyLine annotation;
+		
+		
+		public DrawSM(Canvas view) {
+			super(view);
+			this.view = view;
+		}
+		
+		State wait = new State() {
+			Transition press = new Press(BUTTON1, ">> drawing") {
+				public void action() {
+					annotation = view.newPolyLine(getPoint());
+					annotation.setFilled(false);
+					annotation.setStroke(new BasicStroke(2));
+				}
+			};
+		};
+		
+		State drawing = new State() {
+			Transition drag = new Drag() {
+				public void action() {
+					annotation.lineTo(getPoint());
+				}
+			};
+			
+			Transition release = new Release(">> wait") {
+				public void action() {
+					annotation.lineTo(getPoint());
+				}
+			};
+		};
+	}
+	
+	
+	// delete shapes on canvas by gestures use
+	private class DeleteSM extends CStateMachine {
+		// classfifier and gesture which will help classify user's input
+		Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/delete.cl");
+		Gesture gesture = null;
+		
+		CPolyLine ghost = null;
+		
+		CShape caught = null;
+
+		Canvas view;
+		
+		public DeleteSM(Canvas view) {
+			super(view);
+			this.view = view;
+		}
+		
+		
+		State init = new State() {
+			Transition press = new Press(BUTTON3, ">> erasing") {
+				public void action() {
+					Point2D mouse = getPoint();
+					
+					gesture = new Gesture();
+					gesture.addPoint(mouse.getX(), mouse.getY());
+					
+					ghost = view.newPolyLine(mouse);
+					ghost.setFilled(false);
+					ghost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
+				}
+			};
+		};
+		
+		State erasing = new State() {
+			Transition drawing = new Drag() {
+				public void action() {
+					Point2D mouse = getPoint();
+					
+					gesture.addPoint(mouse.getX(), mouse.getY());
+					
+					ghost.lineTo(mouse);
+					
+					// catch the shape below the gesture
+					if(caught == null) {
+						view.removeShape(ghost);
+						CShape tmp = view.contains(mouse);
+						if(!(tmp instanceof CRectangle)) {
+							caught = tmp;
+						}
+						view.addShape(ghost);
+					}
+				}
+			};
+			
+			Transition release = new Release(BUTTON3, ">> init") {
+				public void action() {
+					view.removeShape(ghost);
+					
+					if(classifier.classify(gesture) != null) {
+						view.removeShape(caught);
+						
+						caught = null;
+					}
+				}
 			};
 		};
 	}

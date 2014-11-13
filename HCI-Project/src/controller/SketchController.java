@@ -5,6 +5,7 @@ import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 import javax.swing.JTextField;
 
@@ -15,12 +16,15 @@ import fr.lri.swingstates.canvas.CText;
 import fr.lri.swingstates.canvas.Canvas;
 import fr.lri.swingstates.canvas.transitions.PressOnShape;
 import fr.lri.swingstates.canvas.transitions.ReleaseOnShape;
+import fr.lri.swingstates.gestures.Gesture;
+import fr.lri.swingstates.gestures.dollar1.Dollar1Classifier;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.Transition;
 import fr.lri.swingstates.sm.transitions.Click;
 import fr.lri.swingstates.sm.transitions.Drag;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
+import view.ProjectView;
 import view.SketchView;
 import model.SketchModel;
 
@@ -33,7 +37,9 @@ public class SketchController {
 	
 	private Dimension minimalDimension = new Dimension(100, 100);
 	
+	private ArrayList<CStateMachine> machines;
 	private CStateMachine drawMachine;
+	private CStateMachine deleteMachine;
 	private CStateMachine moveMachine;
 	private CStateMachine nameMachine;
 	private CStateMachine duplicateMachine;
@@ -50,20 +56,25 @@ public class SketchController {
 			view.setBorder(SketchView.INVALIDE_BORDER);
 		}
 		
+		machines = new ArrayList<CStateMachine>();
+		
 		// enable drawing on the Sketch
-		drawMachine = attachDrawSM(view);
+		machines.add(drawMachine = attachDrawSM());
+
+		// enable erasing shapes
+		machines.add(deleteMachine = attachDeleteSM());
 		
 		// enable Sketch's movement
-		moveMachine = attachMoveSM(view.getTitleBar());
+		machines.add(moveMachine = attachMoveSM(view.getTitleBar()));
 		
 		// enable direct editing of the Sketch's name
-		nameMachine = attachNameSM(view.getTitle());
+		machines.add(nameMachine = attachNameSM(view.getTitle()));
 		
 		// enable Sketches duplication
-		duplicateMachine = attachDuplicateSM(view.getCopyButton());
+		machines.add(duplicateMachine = attachDuplicateSM(view.getCopyButton()));
 		
 		// enablt Sketches resizing
-		resizeMachine = attachResizeSM(view.getResizeButton());
+		machines.add(resizeMachine = attachResizeSM(view.getResizeButton()));
 	}
 	
 	// access to a sketch's view from its controller
@@ -117,26 +128,26 @@ public class SketchController {
 	
 	// pause all machines this sketch is attached to
 	public void suspendMachines() {
-		drawMachine.suspend();
-		moveMachine.suspend();
-		nameMachine.suspend();
-		duplicateMachine.suspend();
-		resizeMachine.suspend();
+		for(CStateMachine machine: machines) {
+			machine.suspend();
+		}
 	}
 	
 	
 	// pause all machines this sketch is attached to
 	public void resumeMachines() {
-		drawMachine.resume();
-		moveMachine.resume();
-		nameMachine.resume();
-		duplicateMachine.resume();
-		resizeMachine.resume();
+		for(CStateMachine machine: machines) {
+			machine.resume();
+		}
 	}
 	
 	// enable draw on the sketch
-	private CStateMachine attachDrawSM(Canvas canvas) {
-		return new CStateMachine(canvas) {
+	private CStateMachine attachDrawSM() {
+		return new CStateMachine(view) {
+			
+			// recognize squared widget
+			Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/square.cl");
+			Gesture gesture = null;
 			
 			CPolyLine line = null;
 			
@@ -148,6 +159,9 @@ public class SketchController {
 						line.setFilled(false);
 						model.addShape(line);
 						view.update();
+						
+						gesture = new Gesture();
+						gesture.addPoint(getPoint().getX(), getPoint().getY());
 					}
 				};
 			};
@@ -156,13 +170,80 @@ public class SketchController {
 				Transition move = new Drag() {
 					public void action() {
 						line.lineTo(getPoint());
+						gesture.addPoint(getPoint().getX(), getPoint().getY());
 					}
 				};
 				
 				Transition release = new Release(BUTTON1, ">> beforeDrawing") {
-					public void action() {}
+					public void action() {
+						if(classifier.classify(gesture) != null) {
+							view.recognizedWidget(line);
+						}
+					}
 				};
 				
+			};
+		};
+	}
+	
+	// enable erasing shapes on view
+	private CStateMachine attachDeleteSM() {
+		return new CStateMachine(view) {
+			
+			// classfifier and gesture which will help classify user's input
+			Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/delete.cl");
+			Gesture gesture = null;
+			
+			CPolyLine ghost = null;
+			
+			CShape caught = null;
+			
+			State init = new State() {
+				Transition press = new Press(BUTTON3, ">> erasing") {
+					public void action() {
+						Point2D mouse = getPoint();
+						
+						gesture = new Gesture();
+						gesture.addPoint(mouse.getX(), mouse.getY());
+						
+						ghost = view.newPolyLine(mouse);
+						ghost.setFilled(false);
+						ghost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
+					}
+				};
+			};
+			
+			State erasing = new State() {
+				Transition drawing = new Drag() {
+					public void action() {
+						Point2D mouse = getPoint();
+						
+						gesture.addPoint(mouse.getX(), mouse.getY());
+						
+						ghost.lineTo(mouse);
+						
+						// catch the shape below the gesture
+						if(caught == null) {
+							view.removeShape(ghost);
+							caught = view.contains(mouse);
+							view.addShape(ghost);
+						}
+					}
+				};
+				
+				Transition release = new Release(BUTTON3, ">> init") {
+					public void action() {
+						view.removeShape(ghost);
+						if(classifier.classify(gesture) != null) {
+							model.removeShape((CPolyLine) caught);
+							view.removeShape(caught);
+							
+							caught = null;
+							
+							view.repaint();
+						}
+					}
+				};
 			};
 		};
 	}
