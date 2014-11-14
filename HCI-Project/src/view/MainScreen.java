@@ -28,26 +28,26 @@ public class MainScreen extends JFrame {
 		setTitle("SILK");
 		//setLayout(null);
 		
-		//Palette's initialization
-		initPalette();
-		
 		//menu's initialization
-		initMenu(width);
+		//initMenu(width);
 		
 		// add a fresh project at the starting
-		newProject(width, height);
+		ProjectController pc = newProject(width, height);
+		
+		//Palette's initialization
+		initPalette(pc);
 		
 		validate();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	}
 	
-	private void initPalette() {
+	private void initPalette(ProjectController pc) {
 		JPanel glass = (JPanel)getGlassPane();
 		glass.setVisible(true);
 		
 		PaletteModel m = new PaletteModel();
 		PaletteView v = new PaletteView(m);
-		PaletteController c = new PaletteController(this, v, m);
+		PaletteController c = new PaletteController(this, v, m, pc);
 		
 		glass.add(v);
 	}

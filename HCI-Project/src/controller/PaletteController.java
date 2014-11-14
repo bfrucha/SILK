@@ -27,12 +27,14 @@ public class PaletteController {
 	private MainScreen parent;
 	private PaletteView view;
 	private PaletteModel model;
+	private ProjectController pc;
 	
 	
-	public PaletteController(MainScreen p, PaletteView view, PaletteModel model) {
+	public PaletteController(MainScreen p, PaletteView view, PaletteModel model, ProjectController pc) {
 		parent = p;
 		this.view = view;
 		this.model = model;
+		this.pc = pc;
 		
 		movePalette(view);
 		
@@ -60,7 +62,6 @@ public class PaletteController {
 						c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
 						if (c != null && c.getName() != "null")
 						{
-							System.out.println("Hover " + c.getName());
 							c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
 						}
 					};
@@ -74,7 +75,6 @@ public class PaletteController {
 				{
 					public void action()
 					{
-						System.out.println("Leave " + c.getName());
 						if (c != null && c.getName() != "null")
 							c.newImage(2.5, 2.5, "images/"+c.getName()+".png").setOutlined(false);
 						c = null;
@@ -95,8 +95,18 @@ public class PaletteController {
 					public void action()
 					{
 						Canvas c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
-						System.out.println(c.getName());
-						//TODO
+						if (c.getName() == "annotate")
+						{
+							pc.changeMode(ProjectController.ANNOTATIONS_MODE);
+						}
+						else if (c.getName() == "draw")
+						{
+							pc.changeMode(ProjectController.WIDGETS_MODE);
+						}
+						else
+						{
+							pc.changeMode(ProjectController.INTERACTIONS_MODE);
+						}
 					};
 				};
 			};

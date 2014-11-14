@@ -30,8 +30,6 @@ public class ProjectController {
 	public static final int WIDGETS_MODE = 0;
 	public static final int INTERACTIONS_MODE = 1;
 	public static final int ANNOTATIONS_MODE = 2;
-	public static final int DRAW = 0;
-	public static final int ERASE = 1;
 	private int currentMode = WIDGETS_MODE;
 	
 	private ProjectModel model;

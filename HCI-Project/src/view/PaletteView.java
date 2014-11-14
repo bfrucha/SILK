@@ -33,13 +33,14 @@ public class PaletteView extends Canvas {
 		setSize(model.getSize());
 		setBackground(model.getBg());
 		setBorder(new LineBorder(model.getBorder()));
+		setOpaque(false);
 		
 		initModes();
 		
 		validate();
 	}
 	
-	public void initModes() 
+	public void initModes()
 	{
 		//Modes
 		int init = 10;
