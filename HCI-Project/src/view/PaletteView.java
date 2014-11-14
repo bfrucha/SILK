@@ -52,17 +52,17 @@ public class PaletteView extends Canvas {
 			
 			if (e.getKey() == "Annotate")
 			{
-				e.getValue().setName("Annotate");
+				e.getValue().setName("annotate");
 				e.getValue().newImage(2.5, 2.5, ICON_ANNOTATE).setOutlined(false);
 			}
 			else if (e.getKey() == "Draw")
 			{
-				e.getValue().setName("Draw");
+				e.getValue().setName("draw");
 				e.getValue().newImage(2.5, 2.5, ICON_DRAW).setOutlined(false);
 			}
 			else
 			{
-				e.getValue().setName("Interact");
+				e.getValue().setName("interact");
 				e.getValue().newImage(2.5, 2.5, ICON_INTERACT).setOutlined(false);
 			}
 			

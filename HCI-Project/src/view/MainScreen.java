@@ -32,7 +32,7 @@ public class MainScreen extends JFrame {
 		initPalette();
 		
 		//menu's initialization
-		//initMenu(width);
+		initMenu(width);
 		
 		// add a fresh project at the starting
 		newProject(width, height);
