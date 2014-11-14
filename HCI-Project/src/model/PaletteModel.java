@@ -7,8 +7,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-import javax.vecmath.Point2d;
-
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.Canvas;
 

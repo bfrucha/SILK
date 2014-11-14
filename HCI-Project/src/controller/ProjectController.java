@@ -30,6 +30,7 @@ public class ProjectController {
 	public static final int WIDGETS_MODE = 0;
 	public static final int INTERACTIONS_MODE = 1;
 	public static final int ANNOTATIONS_MODE = 2;
+
 	private int currentMode = WIDGETS_MODE;
 	
 	private ProjectModel model;
@@ -78,7 +79,7 @@ public class ProjectController {
 			// creation of the new sketch
 			State creation = new State() {
 				
-				Transition press = new Press(BUTTON3, ">> dimension") {
+				Transition press = new Press(BUTTON1, ">> dimension") {
 					public void action() {
 						initialPoint = getPoint();
 						
@@ -98,7 +99,7 @@ public class ProjectController {
 				};
 				
 				// end creation of the sketch
-				Transition release = new Release(BUTTON3, ">> creation") {
+				Transition release = new Release(BUTTON1, ">> creation") {
 					public void action() {
 						// creation of the new sketch
 						//newSketch = new Sketch(MainScreen.this, "New Sketch", (int) ghost.getWidth(), (int) ghost.getHeight());
@@ -128,7 +129,7 @@ public class ProjectController {
 			SketchController caught;
 			
 			State noAction = new State() {
-				Transition begin = new Press(BUTTON1, ">> selection") {
+				Transition begin = new Press(BUTTON3, ">> selection") {
 					public void action() {
 						calque = view.getCalque();
 						
@@ -170,7 +171,7 @@ public class ProjectController {
 					}
 				};
 				
-				Transition validate = new Release(BUTTON1, ">> noAction") {
+				Transition validate = new Release(BUTTON3, ">> noAction") {
 					public void action() {
 						// delete the selected sketch
 						if(caught != null && actionGhost.getOutlinePaint() == ProjectView.SUPPRESSION_ACTION_COLOR) {
