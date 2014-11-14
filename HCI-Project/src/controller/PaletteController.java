@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JPanel;
 
@@ -29,6 +30,8 @@ public class PaletteController {
 	private PaletteModel model;
 	private ProjectController pc;
 	
+	private String selected_mode = "draw";
+	
 	
 	public PaletteController(MainScreen p, PaletteView view, PaletteModel model, ProjectController pc) {
 		parent = p;
@@ -43,6 +46,8 @@ public class PaletteController {
 		{
 			e.getValue().attachSM(clickPalette(), false);
 			hoverPalette().attachTo(e.getValue());
+			if (e.getValue().getName() == selected_mode)
+				e.getValue().newImage(2.5, 2.5, "images/"+e.getValue().getName()+"_neg.png").setOutlined(false);
 		}
 	}
 	
@@ -60,7 +65,7 @@ public class PaletteController {
 					public void action()
 					{
 						c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
-						if (c != null && c.getName() != "null")
+						if (c != null && c.getName() != "null" && c.getName() != selected_mode)
 						{
 							c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
 						}
@@ -75,7 +80,7 @@ public class PaletteController {
 				{
 					public void action()
 					{
-						if (c != null && c.getName() != "null")
+						if (c != null && c.getName() != "null" && c.getName() != selected_mode)
 							c.newImage(2.5, 2.5, "images/"+c.getName()+".png").setOutlined(false);
 						c = null;
 					};
@@ -94,19 +99,26 @@ public class PaletteController {
 				{
 					public void action()
 					{
+						for (Entry<String, Canvas> t : model.getModes().entrySet())
+							t.getValue().newImage(2.5, 2.5, "images/"+t.getValue().getName()+".png").setOutlined(false);
+							
 						Canvas c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
 						if (c.getName() == "annotate")
 						{
 							pc.changeMode(ProjectController.ANNOTATIONS_MODE);
+							selected_mode = "annotate";
 						}
 						else if (c.getName() == "draw")
 						{
 							pc.changeMode(ProjectController.WIDGETS_MODE);
+							selected_mode = "draw";
 						}
 						else
 						{
 							pc.changeMode(ProjectController.INTERACTIONS_MODE);
+							selected_mode = "interact";
 						}
+						c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
 					};
 				};
 			};
