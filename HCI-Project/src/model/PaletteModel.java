@@ -7,6 +7,8 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
+import javax.vecmath.Point2d;
+
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.Canvas;
 
@@ -17,7 +19,7 @@ public class PaletteModel {
 	private Point position;
 	
 	private final Color BG_INIT = new Color(90, 90, 90, 200);
-	private final Color BG_CLICKED = new Color(90, 90, 90, 255);
+	private final Color BG_CLICKED = new Color(90, 90, 90);
 	private final Color BORDER = new Color(29,29,29);
 	private Color bg;
 	

@@ -66,6 +66,8 @@ public class PaletteView extends Canvas {
 				e.getValue().newImage(2.5, 2.5, ICON_INTERACT).setOutlined(false);
 			}
 			
+			e.getValue().setToolTipText(e.getValue().getName());
+			
 			this.add(e.getValue());
 			
 			init += model.getModes_size().height;

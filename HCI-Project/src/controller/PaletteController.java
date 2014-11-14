@@ -1,26 +1,25 @@
 package controller;
 
-import java.awt.Component;
-import java.awt.MouseInfo;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.Map;
 
-import javax.swing.border.LineBorder;
+import javax.swing.JPanel;
 
+import model.PaletteModel;
+import view.MainScreen;
+import view.PaletteView;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.Canvas;
+import fr.lri.swingstates.sm.JStateMachine;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.Transition;
-import fr.lri.swingstates.sm.jtransitions.PressOnComponent;
 import fr.lri.swingstates.sm.transitions.Drag;
 import fr.lri.swingstates.sm.transitions.Enter;
 import fr.lri.swingstates.sm.transitions.Leave;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
-import model.PaletteModel;
-import view.MainScreen;
-import view.PaletteView;
 
 public class PaletteController {
 
@@ -41,24 +40,44 @@ public class PaletteController {
 		for (Map.Entry<String, Canvas> e : model.getModes().entrySet())
 		{
 			e.getValue().attachSM(clickPalette(), false);
-			e.getValue().attachSM(hoverPalette(), false);
+			hoverPalette().attachTo(e.getValue());
 		}
 	}
 	
-	public CStateMachine hoverPalette()
+	public JStateMachine hoverPalette()
 	{
-		return new CStateMachine()
+		return new JStateMachine()
 		{
 			Canvas c;
+			Canvas info;
 			
 			State init = new State()
 			{
-				Transition hover = new Enter(">> init")
+				Transition hover = new Enter(">> hover")
 				{
 					public void action()
 					{
 						c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
-						System.out.println("Hover " + c.getName());
+						if (c != null && c.getName() != "null")
+						{
+							System.out.println("Hover " + c.getName());
+							c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
+						}
+					};
+				};
+			};
+			
+			
+			State hover = new State()
+			{	
+				Transition leave = new Leave(">> init")
+				{
+					public void action()
+					{
+						System.out.println("Leave " + c.getName());
+						if (c != null && c.getName() != "null")
+							c.newImage(2.5, 2.5, "images/"+c.getName()+".png").setOutlined(false);
+						c = null;
 					};
 				};
 			};
@@ -104,7 +123,7 @@ public class PaletteController {
 			State position = new State() {
 				Transition drag = new Drag(">> position") {
 					public void action() {
-						//if (parent.getMousePosition(true) != null)
+						if (parent.getMousePosition(true) != null)
 						{
 							Point2D mouse = getPoint();
 							Point2D movement = new Point2D.Double(mouse.getX() - delta.getX() , mouse.getY() - delta.getY());
@@ -116,11 +135,11 @@ public class PaletteController {
 							
 							if (x <= 0)
 								model.moveTo(model.getPosition().x, y);
-							else if (y <= 0)
+							if (y <= 0)
 								model.moveTo(x, model.getPosition().y);
-							else if (x >= parent.getWidth()-model.getSize().width)
+							if (x >= parent.getWidth()-model.getSize().width)
 								model.moveTo(model.getPosition().x, y);
-							else if (y >= parent.getHeight()-model.getSize().height)
+							if (y >= parent.getHeight()-model.getSize().height)
 								model.moveTo(x, model.getPosition().y);
 							
 							else
