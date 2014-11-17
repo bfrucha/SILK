@@ -31,7 +31,7 @@ public class SketchView extends Canvas {
 	private SketchModel model;
 	
 	// all recognized widgets have this tag
-	private WidgetTag widgetTag = new WidgetTag();
+	private final WidgetTag widgetTag = new WidgetTag();
 	
 	// menu variables
 	private TitleBar titleBar;
@@ -104,7 +104,7 @@ public class SketchView extends Canvas {
 	public void update() {
 		Dimension size = model.getSize();
 		
-		setLocation(model.getRefPoint());
+		setLocation(model.getLocation());
 		setSize(size);
 		
 		titleBar.update(size.width);
