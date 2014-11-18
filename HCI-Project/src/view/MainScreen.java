@@ -1,11 +1,11 @@
 package view;
 
 import implementation.Implement;
+import implementation.Run;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.File;
 
 import javax.swing.JFileChooser;
@@ -89,6 +89,18 @@ public class MainScreen extends JFrame {
 		//build.setMnemonic(KeyEvent.VK_M);
 		
 		JMenuItem bar = new JMenuItem("Build&Run");
+		bar.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser f = new JFileChooser(new java.io.File("."));
+				f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				int valR = f.showOpenDialog(MainScreen.this);
+				if (valR == JFileChooser.APPROVE_OPTION)
+				{
+					Run r = new Run(new File(f.getSelectedFile().getAbsolutePath()), pc);
+				}
+			}
+		});
 		
 		build.setEnabled(true);
 		bar.setEnabled(true);

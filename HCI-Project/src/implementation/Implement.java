@@ -33,6 +33,13 @@ public class Implement
 			//Tout les sketchs du project : 1 sketch -> 1 classe
 			ArrayList<SketchController> sketchs = project.getModel().getSketches();
 			
+			//Si tout les sketchs n'ont pas un nom différent
+			if (!allDiffName(sketchs))
+			{
+				System.err.println("Erreur : Implement.java : createClasses : tout les sketchs n'ont pas un nom différent !");
+				return;
+			}
+			
 			//Shapes de chaque sketch
 			ArrayList<CPolyLine> shapes;
 			
@@ -143,9 +150,26 @@ public class Implement
 		toWrite += "\n}";
 		//Fin
 		
-		System.out.println(toWrite);
-		
 		return toWrite;
+	}
+	
+	//Méthode permettant de savoir si il existe 2 sketchs de même nom
+	private boolean allDiffName(ArrayList<SketchController> sketchs)
+	{
+		boolean allDiff = true;
+		ArrayList<String> list = new ArrayList<String>();
+		
+		for (SketchController s : sketchs)
+		{
+			if (list.contains(s.getModel().getName()))
+			{
+				allDiff = false;
+				break;
+			}
+			list.add(s.getModel().getName());
+		}
+		
+		return allDiff;
 	}
 	
 	/*private ArrayList<String> getAllDiffSketchs()
