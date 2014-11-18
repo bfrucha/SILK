@@ -117,7 +117,7 @@ public class PaletteController {
 						{
 							pc.changeMode(ProjectController.INTERACTIONS_MODE);
 							selected_mode = "interact";
-							Implement i = new Implement(pc.getModel());
+							Implement i = new Implement(pc);
 							i.createClasses(new File("/"));
 						}
 						c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);

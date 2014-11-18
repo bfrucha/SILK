@@ -77,7 +77,10 @@ public class ProjectController {
 		return model;
 	}
 	
-	
+	public InteractionsController getInteractionsController() {
+		return interactionsController;
+	}
+
 	public CStateMachine attachCreationSM() {
 		return new CStateMachine(view) {
 			

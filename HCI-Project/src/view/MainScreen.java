@@ -3,9 +3,12 @@ package view;
 import java.awt.Dimension;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
-import controller.ProjectController;
+import model.PaletteModel;
 import model.ProjectModel;
+import controller.PaletteController;
+import controller.ProjectController;
 
 public class MainScreen extends JFrame {
 
@@ -20,7 +23,10 @@ public class MainScreen extends JFrame {
 		setTitle("SILK");
 		
 		// add a fresh project at the starting
-		newProject(width, height);
+		ProjectController pc = newProject(width, height);
+		
+		//Palette's initialization
+		initPalette(pc);
 		
 		validate();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -34,6 +40,17 @@ public class MainScreen extends JFrame {
 		getContentPane().add(projectView);
 		
 		return new ProjectController(projectModel, projectView);
+	}
+	
+	private void initPalette(ProjectController pc) {
+		JPanel glass = (JPanel)getGlassPane();
+		glass.setVisible(true);
+		
+		PaletteModel m = new PaletteModel();
+		PaletteView v = new PaletteView(m);
+		PaletteController c = new PaletteController(this, v, m, pc);
+		
+		glass.add(v);
 	}
 	
 	public static void main(String[] args) {
