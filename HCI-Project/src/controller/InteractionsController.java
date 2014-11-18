@@ -37,6 +37,9 @@ public class InteractionsController {
 		deleteMachine = attachDeleteSM();
 	}
 	
+	public InteractionsModel getModel() {
+		return model;
+	}
 	
 	public CStateMachine attachDrawSM() {
 		return new CStateMachine(view) {
