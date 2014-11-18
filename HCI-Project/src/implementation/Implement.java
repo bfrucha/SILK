@@ -39,9 +39,6 @@ public class Implement
 			//Pour chaque sketch
 			for (SketchController s : sketchs)
 			{
-				//On récupère les widgets identifiés de ce sketch
-				ArrayList<WidgetController> widgets = s.getModel().getWidgets();
-				
 				String sketchName = s.getModel().getName().replaceAll("\\s+","");
 				
 				//Creation du fichier
@@ -53,7 +50,7 @@ public class Implement
 					FileWriter fw = new FileWriter(classe);
 					
 					//Ecriture du string
-					fw.write(toWrite(s, widgets, sketchName));
+					fw.write(toWrite(s, sketchName));
 					
 					fw.close();
 				} 
@@ -71,8 +68,12 @@ public class Implement
 
 	//Methode consturisant le string a écrire dans le fichier .java
 	//Ne gere que les bouttons pour l'instant
-	private String toWrite(SketchController s, ArrayList<WidgetController> widgets, String sketchName)
+	private String toWrite(SketchController s, String sketchName)
 	{
+		
+		//On récupère les widgets identifiés de ce sketch
+		ArrayList<WidgetController> widgets = s.getModel().getWidgets();
+		
 		//Préparation du string a ecrire dans le fichier
 		String toWrite = "";
 		
@@ -114,13 +115,17 @@ public class Implement
 		//ActionPerformed
 		toWrite += "\n\tpublic void actionPerformed(ActionEvent e) {\n";
 		
-		if (!interactions.getModel().getInteractions().isEmpty()) //Si il y a des interactions
+		if (!interactions.getModel().getInteractions().isEmpty()) //Si il existe des interactions
 		{
 			for (Entry<WidgetController, SketchController> e : interactions.getModel().getInteractions().entrySet())
 			{
-				toWrite += "\t\t" + "if (e.getSource() == btn"+widgets.indexOf(e.getKey())+1 + "){\n";
-				toWrite += "\t\t\t" + e.getValue().getModel().getName() + " frame = new " + e.getValue().getModel().getName() + "();\n";
-				toWrite += "\t\t" + "}\n";
+				int idWid = widgets.indexOf(e.getKey()) + 1;
+				if (idWid != 0)
+				{
+					toWrite += "\t\t" + "if (e.getSource() == btn"+ idWid + "){\n";
+					toWrite += "\t\t\t" + e.getValue().getModel().getName().replaceAll("\\s+","") + " frame = new " + e.getValue().getModel().getName().replaceAll("\\s+","") + "();\n";
+					toWrite += "\t\t" + "}\n";
+				}
 			}
 			
 			toWrite += "\t\tdispose();\n";
@@ -132,7 +137,7 @@ public class Implement
 		toWrite += "\n";
 		
 		//Main
-		toWrite += "\tpublic static void main(String[] args) {\n\t\tnew "+sketchName+"();\n\t}\n";
+		toWrite += "\tpublic static void main(String[] args)\n\t{\n\t\tnew "+sketchName+"();\n\t}\n";
 		//Fin main
 		
 		toWrite += "\n}";
