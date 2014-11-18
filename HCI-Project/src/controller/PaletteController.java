@@ -107,8 +107,6 @@ public class PaletteController {
 						{
 							pc.changeMode(ProjectController.ANNOTATIONS_MODE);
 							selected_mode = "annotate";
-							Implement i = new Implement(pc);
-							i.createClasses(new File("/Users/lsaublet/Desktop/ProjectSilkOutput/"));
 						}
 						else if (c.getName() == "draw")
 						{

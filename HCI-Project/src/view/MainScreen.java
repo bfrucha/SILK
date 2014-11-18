@@ -1,8 +1,18 @@
 package view;
 
-import java.awt.Dimension;
+import implementation.Implement;
 
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.io.File;
+
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
 import model.PaletteModel;
@@ -28,6 +38,9 @@ public class MainScreen extends JFrame {
 		//Palette's initialization
 		initPalette(pc);
 		
+		//Menu initialization
+		initMenu(pc);
+		
 		validate();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 	}
@@ -48,9 +61,43 @@ public class MainScreen extends JFrame {
 		
 		PaletteModel m = new PaletteModel();
 		PaletteView v = new PaletteView(m);
-		PaletteController c = new PaletteController(this, v, m, pc);
+		new PaletteController(this, v, m, pc);
 		
 		glass.add(v);
+	}
+	
+	private void initMenu(final ProjectController pc)
+	{
+		JMenuBar menuBar = new JMenuBar();
+		
+		JMenu impl = new JMenu("Build/Run");
+		
+		JMenuItem build = new JMenuItem("Build");
+		build.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Implement i = new Implement(pc);
+				//"/Users/lsaublet/Desktop/ProjectSilkOutput/"
+				JFileChooser f = new JFileChooser(new java.io.File("."));
+				f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				int valR = f.showOpenDialog(MainScreen.this);
+				if (valR == JFileChooser.APPROVE_OPTION)
+					i.createClasses(new File(f.getSelectedFile().getAbsolutePath()));
+			}
+		});
+		// affectation du raccourci alt+m Plutot cool !
+		//build.setMnemonic(KeyEvent.VK_M);
+		
+		JMenuItem bar = new JMenuItem("Build&Run");
+		
+		build.setEnabled(true);
+		bar.setEnabled(true);
+		
+		impl.add(build);
+		impl.add(bar);
+		menuBar.add(impl);
+		
+		setJMenuBar(menuBar);
 	}
 	
 	public static void main(String[] args) {
