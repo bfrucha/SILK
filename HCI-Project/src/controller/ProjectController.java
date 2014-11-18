@@ -72,6 +72,11 @@ public class ProjectController {
 		return view;
 	}
 	
+	public ProjectModel getModel()
+	{
+		return model;
+	}
+	
 	
 	public CStateMachine attachCreationSM() {
 		return new CStateMachine(view) {

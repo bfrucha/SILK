@@ -1,12 +1,12 @@
 package controller;
 
-import java.awt.Color;
+import implementation.Implement;
+
 import java.awt.Point;
 import java.awt.geom.Point2D;
+import java.io.File;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.swing.JPanel;
 
 import model.PaletteModel;
 import view.MainScreen;
@@ -117,6 +117,8 @@ public class PaletteController {
 						{
 							pc.changeMode(ProjectController.INTERACTIONS_MODE);
 							selected_mode = "interact";
+							Implement i = new Implement(pc.getModel());
+							i.createClasses(new File("/"));
 						}
 						c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
 					};

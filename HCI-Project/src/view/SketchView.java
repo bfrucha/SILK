@@ -99,6 +99,7 @@ public class SketchView extends Canvas {
 	// call this method when a widget is recognized
 	public void recognizedWidget(CShape shape) {
 		shape.addTag(widgetTag);
+		shape.addTag("Button");
 	}
 	
 	public void update() {
