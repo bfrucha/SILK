@@ -6,10 +6,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.JTextField;
 
 import fr.lri.swingstates.canvas.CPolyLine;
+import fr.lri.swingstates.canvas.CRectangle;
 import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.CText;
@@ -26,7 +28,9 @@ import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
 import view.ProjectView;
 import view.SketchView;
+import view.WidgetView;
 import model.SketchModel;
+import model.WidgetModel;
 
 public class SketchController {
 
@@ -44,6 +48,12 @@ public class SketchController {
 	private CStateMachine nameMachine;
 	private CStateMachine duplicateMachine;
 	private CStateMachine resizeMachine;
+
+	// recognize rectangle widgets
+	private static Dollar1Classifier widgetClassifier = Dollar1Classifier.newClassifier("classifier/square.cl");
+	
+	// ease the suppression of widgets on a sketch
+	private HashMap<CShape, WidgetController> shapeToWidget;
 	
 	
 	public SketchController(ProjectController parent, SketchModel model, SketchView view) {
@@ -51,6 +61,7 @@ public class SketchController {
 
 		this.model = model;
 		this.view = view;
+		
 		// set border to red => not valide dimension
 		if(!hasValideDimension()) {
 			view.setBorder(SketchView.INVALIDE_BORDER);
@@ -75,6 +86,10 @@ public class SketchController {
 		
 		// enablt Sketches resizing
 		machines.add(resizeMachine = attachResizeSM(view.getResizeButton()));
+		
+		
+		// TODO pb when copying a sketch
+		shapeToWidget = new HashMap<CShape, WidgetController>();
 	}
 	
 	// access to a sketch's view from its controller
@@ -87,6 +102,11 @@ public class SketchController {
 		model.move(tlc);
 		putOnTop();
 		view.update();
+	}
+	
+	// get sketch's location
+	public Point2D getLocation() {
+		return model.getLocation();
 	}
 	
 	// change the size of the sketch
@@ -137,16 +157,51 @@ public class SketchController {
 	// pause all machines this sketch is attached to
 	public void resumeMachines() {
 		for(CStateMachine machine: machines) {
-			machine.resume();
+			machine.resume();		
 		}
+	}
+	
+	
+	// create a widget from a rectangle
+	public WidgetController createWidget(CRectangle bounds) {
+		WidgetModel model = new WidgetModel(bounds.getMinX(), bounds.getMinY(),
+											bounds.getWidth(), bounds.getHeight());
+		WidgetView view = new WidgetView(model);
+		
+		return new WidgetController(this, model, view);
+	}
+	
+	// link copied widgets to the new sketch
+	public void linkWidgets() {
+		for(WidgetController widget: model.getWidgets()) {
+			widget.setSketch(this);
+		}
+	}
+	
+	public WidgetController getWidgetAt(Point2D p) {
+		WidgetController widget = null;
+		
+		Point2D location = model.getLocation();
+		Point2D relativePoint = new Point2D.Double(p.getX() - location.getX(), p.getY() - location.getY());
+		
+		int index = 0;
+		ArrayList<WidgetController> widgets = model.getWidgets();
+		
+		while(widget == null && index < widgets.size()) {
+			WidgetController tmp = widgets.get(index++);
+			
+			if(tmp.contains(relativePoint)) {
+				widget = tmp;
+			}
+		}
+		
+		return widget;
 	}
 	
 	// enable draw on the sketch
 	private CStateMachine attachDrawSM() {
 		return new CStateMachine(view) {
 			
-			// recognize squared widget
-			Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/square.cl");
 			Gesture gesture = null;
 			
 			CPolyLine line = null;
@@ -155,13 +210,16 @@ public class SketchController {
 				Transition press = new Press(BUTTON1, ">> drawing") {
 					public void action() {
 						project.putOnTop(SketchController.this);
-						line = new CPolyLine(getPoint());
+						
+						Point2D mouse = getPoint();
+						
+						line = new CPolyLine(mouse);
 						line.setFilled(false);
 						model.addShape(line);
 						view.update();
 						
 						gesture = new Gesture();
-						gesture.addPoint(getPoint().getX(), getPoint().getY());
+						gesture.addPoint(mouse.getX(), mouse.getY());
 					}
 				};
 			};
@@ -169,15 +227,22 @@ public class SketchController {
 			State drawing = new State() {
 				Transition move = new Drag() {
 					public void action() {
-						line.lineTo(getPoint());
-						gesture.addPoint(getPoint().getX(), getPoint().getY());
+						Point2D mouse = getPoint();
+						
+						line.lineTo(mouse);
+						gesture.addPoint(mouse.getX(), mouse.getY());
 					}
 				};
 				
 				Transition release = new Release(BUTTON1, ">> beforeDrawing") {
 					public void action() {
-						if(classifier.classify(gesture) != null) {
+						if(widgetClassifier.classify(gesture) != null) {
 							view.recognizedWidget(line);
+							
+							WidgetController widget = createWidget(line.getBoundingBox());
+							model.addWidget(widget);
+							
+							shapeToWidget.put(line, widget);
 						}
 					}
 				};
@@ -188,63 +253,19 @@ public class SketchController {
 	
 	// enable erasing shapes on view
 	private CStateMachine attachDeleteSM() {
-		return new CStateMachine(view) {
-			
-			// classfifier and gesture which will help classify user's input
-			Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/delete.cl");
-			Gesture gesture = null;
-			
-			CPolyLine ghost = null;
-			
-			CShape caught = null;
-			
-			State init = new State() {
-				Transition press = new Press(BUTTON3, ">> erasing") {
-					public void action() {
-						Point2D mouse = getPoint();
-						
-						gesture = new Gesture();
-						gesture.addPoint(mouse.getX(), mouse.getY());
-						
-						ghost = view.newPolyLine(mouse);
-						ghost.setFilled(false);
-						ghost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
-					}
-				};
-			};
-			
-			State erasing = new State() {
-				Transition drawing = new Drag() {
-					public void action() {
-						Point2D mouse = getPoint();
-						
-						gesture.addPoint(mouse.getX(), mouse.getY());
-						
-						ghost.lineTo(mouse);
-						
-						// catch the shape below the gesture
-						if(caught == null) {
-							view.removeShape(ghost);
-							caught = view.contains(mouse);
-							view.addShape(ghost);
-						}
-					}
-				};
+		return new DeleteShapeSM(view) {
+			public void gestureRecognized() {
+				model.removeShape((CPolyLine) caught);
+				view.removeShape(caught);
 				
-				Transition release = new Release(BUTTON3, ">> init") {
-					public void action() {
-						view.removeShape(ghost);
-						if(classifier.classify(gesture) != null) {
-							model.removeShape((CPolyLine) caught);
-							view.removeShape(caught);
-							
-							caught = null;
-							
-							view.repaint();
-						}
-					}
-				};
-			};
+				// delete widget associated to this shape if it exists
+				WidgetController widget = shapeToWidget.get(caught); 
+				if(widget != null) {
+					model.removeWidget(widget);
+					
+					shapeToWidget.remove(caught);
+				}
+			}
 		};
 	}
 	
@@ -275,7 +296,7 @@ public class SketchController {
 						Point2D mouse = getPoint();
 						Point2D movement = new Point2D.Double(mouse.getX() - delta.getX() , mouse.getY() - delta.getY());
 						
-						Point relPoint = model.getRefPoint();
+						Point relPoint = model.getLocation();
 						model.moveTo((int) (relPoint.getX() + movement.getX()), (int) (relPoint.getY() + movement.getY()));
 						view.update();
 					}

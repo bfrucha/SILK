@@ -20,8 +20,10 @@ import fr.lri.swingstates.sm.transitions.Drag;
 import fr.lri.swingstates.sm.transitions.KeyPress;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
+import view.InteractionsView;
 import view.ProjectView;
 import view.SketchView;
+import model.InteractionsModel;
 import model.ProjectModel;
 import model.SketchModel;
 
@@ -38,10 +40,10 @@ public class ProjectController {
 	
 	private CStateMachine creationMachine;
 	private CStateMachine suppressionMachine;
-	private CStateMachine annotationsDrawMachine;
-	private CStateMachine annotationsDeleteMachine;
-	private CStateMachine interactionsDrawMachine;
-	private CStateMachine interactionsDeleteMachine;
+	
+	private AnnotationsController annotationsController;
+	
+	private InteractionsController interactionsController;
 	
 	
 	public ProjectController(ProjectModel model, ProjectView view) {
@@ -57,12 +59,13 @@ public class ProjectController {
 		suppressionMachine = attachSuppressionSM();
 		
 		// enable annotations writing on top of the project
-		annotationsDrawMachine = annotationsDrawSM();
-		annotationsDeleteMachine = annotationsDeleteSM();
+		annotationsController = new AnnotationsController(view.getAnnotationsView());
 		
 		// enable interactions craetion between sketches
-		interactionsDrawMachine = interactionsDrawSM();
-		interactionsDeleteMachine = interactionsDeleteSM();
+		InteractionsModel intModel = new InteractionsModel();
+		InteractionsView intView = new InteractionsView(view, intModel);
+		view.setInteractionsView(intView);
+		interactionsController = new InteractionsController(this, intModel, intView);
 	}
 	
 	public ProjectView getView() {
@@ -204,28 +207,6 @@ public class ProjectController {
 		};
 	}
 	
-	// enable annotations writing on top of the project's view
-	public CStateMachine annotationsDrawSM() {
-		return new DrawSM(view.getAnnotationsView());
-	}
-	
-	// enable delete gesture in annotation canvas
-	public CStateMachine annotationsDeleteSM() {
-		return new DeleteSM(view.getAnnotationsView());	
-	}
-	
-	
-	// enlable interactions creation between sketches
-	public CStateMachine interactionsDrawSM() {
-		return new DrawSM(view.getInteractionsView());
-	}
-	
-	// enable delete gesture in interactions canvas
-	public CStateMachine interactionsDeleteSM() {
-		return new DeleteSM(view.getInteractionsView());
-	}
-	
-	
 	// change current mode for this project
 	public void changeMode(int mode) {
 		currentMode = mode;
@@ -258,6 +239,9 @@ public class ProjectController {
 		SketchModel cloneModel = new SketchModel(sketchModel);
 		SketchView cloneView = new SketchView(cloneModel);
 		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
+		
+		// need to associate new controller to all sketch's widgets
+		cloneController.linkWidgets();
 		
 		cloneModel.moveBy(40, 40);
 		cloneView.update();
@@ -292,6 +276,18 @@ public class ProjectController {
 			}
 		}
 		return sketch;
+	}
+	
+	// returns widget that contains p point 
+	public WidgetController getWidgetAt(Point2D p) {
+		WidgetController widget;
+		
+		SketchController sketch = getSketchAt(p);
+		
+		if(sketch == null) { return null; }
+		else {
+			return sketch.getWidgetAt(p);
+		}
 	}
 	
 	// suspend all state machines except annotations and interactions ones

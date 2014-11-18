@@ -38,7 +38,6 @@ public class ProjectView extends Canvas {
 		calque.setSize(width, height);
 		calque.setOpaque(false);
 		
-		interactions = new InteractionsView(this);
 		annotations = new AnnotationsView(this);
 		
 		setBackground(BG_COLOR);
@@ -52,12 +51,17 @@ public class ProjectView extends Canvas {
 	
 	
 	// get canvas where project's annotations are written
-	public Canvas getAnnotationsView() {
+	public AnnotationsView getAnnotationsView() {
 		return annotations;
 	}
 	
+	// set the interactions view (called by controller)
+	public void setInteractionsView(InteractionsView intView) {
+		interactions = intView;
+	}
+	
 	// get canvas where project's interactions are written
-	public Canvas getInteractionsView() {
+	public InteractionsView getInteractionsView() {
 		return interactions;
 	}
 	
@@ -92,86 +96,5 @@ public class ProjectView extends Canvas {
 		
 		repaint();
 	}
-
-
-	/* PRIVATE CLASSES */
-	
-	// add transparent background
-	private class AnnotationsView extends Canvas {
-		
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-
-		ProjectView parent;
-		
-		CRectangle background;
-		
-		public AnnotationsView(ProjectView parent) {
-			this.parent = parent;
-			
-			setOpaque(false);
-			
-			background = newRectangle(0, 0, 1, 1);
-			background.setOutlined(false);
-			background.setFillPaint(new Color(BG_COLOR.getRed(), BG_COLOR.getGreen(), BG_COLOR.getBlue(), 100));
-		}
-		
-		public void display() {
-			int width = parent.getWidth();
-			int height = parent.getHeight();
-			
-			setSize(width, height);
-			
-			background.scaleTo(1);
-			background.scaleBy(2*width, 2*height);
-			
-			parent.add(this);
-			parent.setComponentZOrder(this, 0);
-			parent.repaint();
-			parent.validate();
-		}
-	}
-
-	
-	// same class as above for now
-	private class InteractionsView extends Canvas {
-		
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
-
-		ProjectView parent;
-		
-		CRectangle background;
-		
-		public InteractionsView(ProjectView parent) {
-			this.parent = parent;
-			
-			setOpaque(false);
-			
-			background = newRectangle(0, 0, 1, 1);
-			background.setOutlined(false);
-			background.setFillPaint(new Color(255, 255, 255, 100));
-		}
-		
-		public void display() {
-			int width = parent.getWidth();
-			int height = parent.getHeight();
-			
-			setSize(width, height);
-			
-			background.scaleTo(1);
-			background.scaleBy(2*width, 2*height);
-			
-			parent.add(this);
-			parent.setComponentZOrder(this, 0);
-			parent.repaint();
-			parent.validate();
-		}
-	}
-	
 }
 
