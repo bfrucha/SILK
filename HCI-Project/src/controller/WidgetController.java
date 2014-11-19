@@ -2,6 +2,7 @@ package controller;
 
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.HashMap;
 
 import model.WidgetModel;
 import view.WidgetView;

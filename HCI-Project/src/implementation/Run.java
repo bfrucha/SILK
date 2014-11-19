@@ -20,12 +20,12 @@ public class Run
 			
 			//Compilation
 			try {
-				System.out.println("javac " + folder.getAbsolutePath() + "/" + p.getModel().getSketches().get(0).getModel().getName() + ".java");
-				rt.exec("javac " + folder.getAbsolutePath() + "/" + p.getModel().getSketches().get(0).getModel().getName() + ".java").waitFor();
+				System.out.println("javac " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getModel().getName() + ".java");
+				rt.exec("javac " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getModel().getName() + ".java").waitFor();
 				
-				System.out.println("java " + folder.getAbsolutePath() + "/" + p.getModel().getSketches().get(0).getModel().getName());
+				System.out.println("java " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getModel().getName());
 				rt.exec("cd "+ folder.getAbsolutePath() + "/");
-				rt.exec("java " + p.getModel().getSketches().get(0).getModel().getName());
+				rt.exec("java " + p.getSketches().get(0).getModel().getName());
 				
 			} catch (IOException e) {
 				//e.printStackTrace();

@@ -13,30 +13,26 @@ public class WidgetModel extends Rectangle2D.Double {
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private SketchController open;
-	private SketchController close;
+	public final static int BUTTON = 0;
+	public final static int PANEL = 1;
 	
-	public WidgetModel(double x, double y, double width, double height) {
+	private int type;
+	
+	public WidgetModel(int type, double x, double y, double width, double height) {
 		super(x, y, width, height);
+		
+		this.type = type;
 	}
 	
 	public WidgetModel(Rectangle2D bounds) {
 		super(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(), bounds.getHeight());
 	}
 	
-	public void setSketchToOpen(SketchController toOpen) {
-		open = toOpen;
+	public int getType() {
+		return type;
 	}
 	
-	public SketchController getSketchToOpen() {
-		return open;
-	}
-	
-	public void setSketchToClose(SketchController toClose) {
-		close = toClose;
-	}
-	
-	public SketchController getSketchToClose() {
-		return close;
+	public void setType(int type) {
+		this.type = type;
 	}
 }

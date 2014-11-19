@@ -6,7 +6,6 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
-import exception.InvalidActionException;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
 import fr.lri.swingstates.canvas.CShape;
@@ -35,6 +34,8 @@ public class ProjectController {
 
 	private int currentMode = WIDGETS_MODE;
 	
+	private int sketchesNb = 0;
+	
 	private ProjectModel model;
 	private ProjectView view;
 	
@@ -61,7 +62,7 @@ public class ProjectController {
 		// enable annotations writing on top of the project
 		annotationsController = new AnnotationsController(view.getAnnotationsView());
 		
-		// enable interactions craetion between sketches
+		// enable interactions creation between sketches
 		InteractionsModel intModel = new InteractionsModel();
 		InteractionsView intView = new InteractionsView(view, intModel);
 		view.setInteractionsView(intView);
@@ -72,15 +73,14 @@ public class ProjectController {
 		return view;
 	}
 	
-	public ProjectModel getModel()
-	{
-		return model;
+	public AnnotationsController getAnnotationsController() {
+		return annotationsController;
 	}
 	
 	public InteractionsController getInteractionsController() {
 		return interactionsController;
 	}
-
+	
 	public CStateMachine attachCreationSM() {
 		return new CStateMachine(view) {
 			
@@ -230,9 +230,28 @@ public class ProjectController {
 		view.changeMode(currentMode);
 	}
 	
+	// returns project's sketches
+	public ArrayList<SketchController> getSketches() {
+		return model.getSketches();
+	}
+	
+	// check if name is already used by a sketch
+	public boolean isValidName(String name) {
+		ArrayList<SketchController> sketches = model.getSketches();
+
+		int index = 0;
+		int size = sketches.size();
+		while(index < size && !sketches.get(index).getName().equals(name)) { index++; }
+		
+		return index >= size;
+	}
+	
 	// create a new Sketch with basic attributes
 	public SketchController createSketch(Point tlc) {
-		SketchModel sketchModel = new SketchModel("New Sketch", tlc, new Dimension(1, 1));
+		String name = "Sketch " + ++sketchesNb;
+		while(!isValidName(name)) { name = "-"+name; }
+		
+		SketchModel sketchModel = new SketchModel(name, tlc, new Dimension(1, 1));
 		SketchView sketchView = new SketchView(sketchModel);
 		SketchController sketchController = new SketchController(this, sketchModel, sketchView); 
 		
@@ -247,6 +266,13 @@ public class ProjectController {
 		SketchModel cloneModel = new SketchModel(sketchModel);
 		SketchView cloneView = new SketchView(cloneModel);
 		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
+		
+		// change the name of the new sketch
+		String newName = "-"+cloneModel.getName();
+		while(!isValidName(newName)) {
+			newName = "-" + newName;
+		}
+		cloneModel.changeName(newName);
 		
 		// need to associate new controller to all sketch's widgets
 		cloneController.linkWidgets();

@@ -92,14 +92,13 @@ public class SketchController {
 		shapeToWidget = new HashMap<CShape, WidgetController>();
 	}
 	
+	public String getName() {
+		return model.getName();
+	}
+	
 	// access to a sketch's view from its controller
 	public SketchView getView() {
 		return view;
-	}
-	
-	public SketchModel getModel()
-	{
-		return model;
 	}
 	
 	// change the relative point of the sketch
@@ -112,6 +111,10 @@ public class SketchController {
 	// get sketch's location
 	public Point2D getLocation() {
 		return model.getLocation();
+	}
+	
+	public Dimension getSize() {
+		return model.getSize();
 	}
 	
 	// change the size of the sketch
@@ -167,9 +170,9 @@ public class SketchController {
 	}
 	
 	
-	// create a widget from a rectangle
-	public WidgetController createWidget(CRectangle bounds) {
-		WidgetModel model = new WidgetModel(bounds.getMinX(), bounds.getMinY(),
+	// creates a widget from a rectangle
+	public WidgetController createWidget(CRectangle bounds, int type) {
+		WidgetModel model = new WidgetModel(type, bounds.getMinX(), bounds.getMinY(),
 											bounds.getWidth(), bounds.getHeight());
 		WidgetView view = new WidgetView(model);
 		
@@ -242,9 +245,19 @@ public class SketchController {
 				Transition release = new Release(BUTTON1, ">> beforeDrawing") {
 					public void action() {
 						if(widgetClassifier.classify(gesture) != null) {
-							view.recognizedWidget(line);
+							// best guess for widget's type
+							Dimension sketchSize = getSize();
+							CRectangle bounds = line.getBoundingBox();
 							
-							WidgetController widget = createWidget(line.getBoundingBox());
+							int type = WidgetModel.BUTTON;
+							if(bounds.getWidth() >= sketchSize.width/2 
+							&& bounds.getHeight() >= sketchSize.height/2) {
+								type = WidgetModel.PANEL;
+							}
+							
+							view.recognizedWidget(line, type);
+							
+							WidgetController widget = createWidget(line.getBoundingBox(), type);
 							model.addWidget(widget);
 							
 							shapeToWidget.put(line, widget);
@@ -371,7 +384,12 @@ public class SketchController {
 			};
 			
 			private void validateTitle() {
-				model.changeName(ghost.getText());
+				String newName = ghost.getText();
+				
+				if(!project.isValidName(newName) && newName != model.getName()) {
+					newName = "-"+newName;
+				}
+				model.changeName(newName);
 				titleBar.remove(ghost);
 				view.update();
 				titleBar.addShape(title);

@@ -36,9 +36,10 @@ public class InteractionsController {
 		drawMachine = attachDrawSM();
 		deleteMachine = attachDeleteSM();
 	}
-	
-	public InteractionsModel getModel() {
-		return model;
+
+	// get all widget -> sketch interactions from the model
+	public HashMap<WidgetController, SketchController> getInteractions() {
+		return model.getInteractions();
 	}
 	
 	public CStateMachine attachDrawSM() {

@@ -31,7 +31,7 @@ public class Implement
 		if (folder.isDirectory())
 		{
 			//Tout les sketchs du project : 1 sketch -> 1 classe
-			ArrayList<SketchController> sketchs = project.getModel().getSketches();
+			ArrayList<SketchController> sketchs = project.getSketches();
 			
 			//Si tout les sketchs n'ont pas un nom différent
 			if (!allDiffName(sketchs))
@@ -122,9 +122,9 @@ public class Implement
 		//ActionPerformed
 		toWrite += "\n\tpublic void actionPerformed(ActionEvent e) {\n";
 		
-		if (!interactions.getModel().getInteractions().isEmpty()) //Si il existe des interactions
+		if (!interactions.getInteractions().isEmpty()) //Si il existe des interactions
 		{
-			for (Entry<WidgetController, SketchController> e : interactions.getModel().getInteractions().entrySet())
+			for (Entry<WidgetController, SketchController> e : interactions.getInteractions().entrySet())
 			{
 				int idWid = widgets.indexOf(e.getKey()) + 1;
 				if (idWid != 0)

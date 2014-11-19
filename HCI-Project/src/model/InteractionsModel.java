@@ -16,7 +16,7 @@ public class InteractionsModel {
 		interactions = new HashMap<WidgetController, SketchController>();
 		segments = new HashMap<CSegment, WidgetController>();
 	}
-	
+
 	// add a link between a widget and a sketch
 	public void addInteraction(WidgetController widget, SketchController sketch) {
 		interactions.put(widget, sketch);

@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -9,6 +10,7 @@ import java.awt.geom.Point2D;
 import javax.swing.border.LineBorder;
 
 import model.SketchModel;
+import model.WidgetModel;
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
@@ -97,9 +99,12 @@ public class SketchView extends Canvas {
 	}
 	
 	// call this method when a widget is recognized
-	public void recognizedWidget(CShape shape) {
-		shape.addTag(widgetTag);
-		shape.addTag("Button");
+	public void recognizedWidget(CShape shape, int type) {
+		shape.setStroke(new BasicStroke(2));
+		switch(type) {
+		case WidgetModel.PANEL: shape.setOutlinePaint(Color.YELLOW); break;
+		default: shape.setOutlinePaint(Color.GREEN);
+		}
 	}
 	
 	public void update() {
