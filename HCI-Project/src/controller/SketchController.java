@@ -101,6 +101,10 @@ public class SketchController {
 		return view;
 	}
 	
+	public ArrayList<WidgetController> getWidgets() {
+		return model.getWidgets();
+	}
+	
 	// change the relative point of the sketch
 	public void setLocation(Point tlc) {
 		model.move(tlc);

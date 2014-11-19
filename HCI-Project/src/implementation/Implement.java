@@ -46,7 +46,7 @@ public class Implement
 			//Pour chaque sketch
 			for (SketchController s : sketchs)
 			{
-				String sketchName = s.getModel().getName().replaceAll("\\s+","");
+				String sketchName = s.getName().replaceAll("\\s+","");
 				
 				//Creation du fichier
 				File classe = new File(folder + "/" + sketchName + ".java");
@@ -79,7 +79,7 @@ public class Implement
 	{
 		
 		//On récupère les widgets identifiés de ce sketch
-		ArrayList<WidgetController> widgets = s.getModel().getWidgets();
+		ArrayList<WidgetController> widgets = s.getWidgets();
 		
 		//Préparation du string a ecrire dans le fichier
 		String toWrite = "";
@@ -104,7 +104,7 @@ public class Implement
 		//Constructeur
 		toWrite += "\tpublic "+ sketchName +"(){\n";
 		toWrite += "\t\tsuper();\n\t\tsetTitle(\""+ sketchName+ "\");\n\t\tsetLayout(null);\n\t\tsetVisible(true);\n";
-		toWrite += "\t\tsetSize(new Dimension("+(int)s.getModel().getSize().getWidth() + ","+ (int)s.getModel().getSize().getHeight() +"));\n\t\tsetLocation(100, 100);\n\n";
+		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)s.getSize().getHeight() +"));\n\t\tsetLocation(100, 100);\n\n";
 		
 		i = 1;
 		for (WidgetController w : widgets)
@@ -130,7 +130,7 @@ public class Implement
 				if (idWid != 0)
 				{
 					toWrite += "\t\t" + "if (e.getSource() == btn"+ idWid + "){\n";
-					toWrite += "\t\t\t" + e.getValue().getModel().getName().replaceAll("\\s+","") + " frame = new " + e.getValue().getModel().getName().replaceAll("\\s+","") + "();\n";
+					toWrite += "\t\t\t" + e.getValue().getName().replaceAll("\\s+","") + " frame = new " + e.getValue().getName().replaceAll("\\s+","") + "();\n";
 					toWrite += "\t\t" + "}\n";
 				}
 			}
@@ -161,12 +161,12 @@ public class Implement
 		
 		for (SketchController s : sketchs)
 		{
-			if (list.contains(s.getModel().getName()))
+			if (list.contains(s.getName()))
 			{
 				allDiff = false;
 				break;
 			}
-			list.add(s.getModel().getName());
+			list.add(s.getName());
 		}
 		
 		return allDiff;
