@@ -298,15 +298,23 @@ public class ProjectController {
 		SketchController sketch= null;
 		
 		ArrayList<SketchController> sketches = model.getSketches();
-		int index = 0;
-		while(sketch == null && index < sketches.size()) {
-			SketchController tmp = sketches.get(index++); 
+		
+		// we need to get the sketch above all
+		// +1 because of interactions view
+		int minimalOrder = sketches.size() + 1;
+		
+		for(int index = 0; index < sketches.size(); index++) {
+			SketchController tmp = sketches.get(index); 
 			SketchView tmpView = tmp.getView();
+			
+			int sketchZOrder = view.getComponentZOrder(tmpView);
 			
 			// need to change coordinates (intrinsec sketch coordinates)
 			Point2D location = tmpView.getLocation();
-			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))) {
+			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))
+			&& minimalOrder > sketchZOrder) {
 				sketch = tmp;
+				minimalOrder = sketchZOrder;
 			}
 		}
 		return sketch;
@@ -322,6 +330,11 @@ public class ProjectController {
 		else {
 			return sketch.getWidgetAt(p);
 		}
+	}
+	
+	
+	public void removeWidget(WidgetController widget) {
+		interactionsController.removeInteraction(widget);
 	}
 	
 	// suspend all state machines except annotations and interactions ones

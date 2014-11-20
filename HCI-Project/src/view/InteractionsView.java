@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -27,6 +28,10 @@ public class InteractionsView extends Canvas {
 	
 	private InteractionsModel model;
 	
+	// attributes of interactions segments
+	protected static final float[] dash_phase = {5, 3};
+	protected static int dash_offset = 5; 
+	
 	public InteractionsView(ProjectView parent, InteractionsModel model) {
 		this.parent = parent;
 		this.model = model;
@@ -51,6 +56,7 @@ public class InteractionsView extends Canvas {
 			SketchController sketch = interaction.getValue();
 			
 			CSegment segment = newSegment(widget.getAbsoluteCenter(), sketch.getLocation());
+			segment.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, dash_phase, dash_offset));
 			
 			if(widget.getSketch() != sketch) {
 				segment.setOutlinePaint(OPEN_PAINT);

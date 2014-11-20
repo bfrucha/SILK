@@ -183,10 +183,16 @@ public class SketchController {
 		return new WidgetController(this, model, view);
 	}
 	
-	// link copied widgets to the new sketch
+	// link copied widgets to the new sketch and update shapeToWidget
 	public void linkWidgets() {
-		for(WidgetController widget: model.getWidgets()) {
-			widget.setSketch(this);
+		ArrayList<WidgetController> widgets = model.getWidgets();
+		ArrayList<CPolyLine> shapes = model.getShapes();
+		
+		for(int index = 0; index <  widgets.size(); index++) {
+			// shapes and widgets should be ordered the same way
+			shapeToWidget.put(shapes.get(index), widgets.get(index));
+			
+			widgets.get(index).setSketch(this);
 		}
 	}
 	
@@ -284,6 +290,9 @@ public class SketchController {
 				WidgetController widget = shapeToWidget.get(caught); 
 				if(widget != null) {
 					model.removeWidget(widget);
+					
+					// warn the project that a widget has been removed
+					project.removeWidget(widget);
 					
 					shapeToWidget.remove(caught);
 				}

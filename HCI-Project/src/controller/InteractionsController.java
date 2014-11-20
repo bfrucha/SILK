@@ -42,6 +42,11 @@ public class InteractionsController {
 		return model.getInteractions();
 	}
 	
+	// remove interactions for a given widget
+	public void removeInteraction(WidgetController widget) {
+		model.removeInteraction(widget);
+	}
+	
 	public CStateMachine attachDrawSM() {
 		return new CStateMachine(view) {
 		 	CSegment ghost;
@@ -56,9 +61,15 @@ public class InteractionsController {
 						initialPoint = getPoint();
 						
 						widgetCaught = project.getWidgetAt(initialPoint);
+						if(widgetCaught == null) {
+							sketchCaught = project.getSketchAt(initialPoint);
+						} else {
+							System.out.println("Caught widget !");
+						}
 						
 						ghost = view.newSegment(initialPoint, initialPoint);
 						ghost.setFilled(false);
+						
 						ghost.setStroke(new BasicStroke(2));
 						ghost.setOutlinePaint(ProjectView.ACTION_COLOR);
 					}
@@ -74,7 +85,13 @@ public class InteractionsController {
 				
 				Transition release = new Release(">> wait") {
 					public void action() {
-						sketchCaught = project.getSketchAt(getPoint());
+						if(sketchCaught == null) {
+							// click on widget on first state
+							sketchCaught = project.getSketchAt(getPoint());
+						} else {
+							// click on sketch on first state
+							widgetCaught = project.getWidgetAt(getPoint());
+						}
 						
 						if(widgetCaught != null && sketchCaught != null) {
 							model.addInteraction(widgetCaught, sketchCaught);
@@ -83,6 +100,8 @@ public class InteractionsController {
 						ghost.remove();
 						view.update();
 						view.repaint();
+						
+						widgetCaught = null; sketchCaught = null;
 					}
 				};
 			};
