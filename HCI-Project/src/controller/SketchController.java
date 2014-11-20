@@ -202,11 +202,12 @@ public class SketchController {
 		Point2D location = model.getLocation();
 		Point2D relativePoint = new Point2D.Double(p.getX() - location.getX(), p.getY() - location.getY());
 		
-		int index = 0;
 		ArrayList<WidgetController> widgets = model.getWidgets();
 		
-		while(widget == null && index < widgets.size()) {
-			WidgetController tmp = widgets.get(index++);
+		// from end to start to respect widgets order
+		int index = widgets.size() - 1;
+		while(widget == null && index >= 0) {
+			WidgetController tmp = widgets.get(index--);
 			
 			if(tmp.contains(relativePoint)) {
 				widget = tmp;
@@ -214,6 +215,21 @@ public class SketchController {
 		}
 		
 		return widget;
+	}
+	
+	
+	// show widgets' bounds
+	public void showWidgetsBounds() {
+		for(WidgetController widget: model.getWidgets()) {
+			view.addShape(widget.getView());
+		}
+	}
+	
+	// hides widgets' bounds
+	public void hideWidgetsBounds() {
+		for(WidgetController widget: model.getWidgets()) {
+			view.removeShape(widget.getView());
+		}
 	}
 	
 	// enable draw on the sketch
@@ -399,7 +415,7 @@ public class SketchController {
 			private void validateTitle() {
 				String newName = ghost.getText();
 				
-				if(!project.isValidName(newName) && newName != model.getName()) {
+				if(!project.isValidName(newName) && !newName.equals(model.getName())) {
 					newName = "-"+newName;
 				}
 				model.changeName(newName);

@@ -219,11 +219,15 @@ public class ProjectController {
 	public void changeMode(int mode) {
 		currentMode = mode;
 		
+		if(currentMode == INTERACTIONS_MODE) {
+			showWidgetsBounds();
+		} else {
+			hideWidgetsBounds();
+		}
+		
 		if(currentMode == INTERACTIONS_MODE || currentMode == ANNOTATIONS_MODE) {
-			System.out.println("Change to Annotations/Interactions mode");
 			suspendMachines();
 		} else {
-			System.out.println("Change to Widgets mode");
 			resumeMachines();
 		}
 		
@@ -248,7 +252,7 @@ public class ProjectController {
 	
 	// create a new Sketch with basic attributes
 	public SketchController createSketch(Point tlc) {
-		String name = "Sketch " + ++sketchesNb;
+		String name = "Sketch" + ++sketchesNb;
 		while(!isValidName(name)) { name = "-"+name; }
 		
 		SketchModel sketchModel = new SketchModel(name, tlc, new Dimension(1, 1));
@@ -335,6 +339,18 @@ public class ProjectController {
 	
 	public void removeWidget(WidgetController widget) {
 		interactionsController.removeInteraction(widget);
+	}
+	 
+	public void showWidgetsBounds() {
+		for(SketchController sketch: model.getSketches()) {
+			sketch.showWidgetsBounds();
+		}
+	}
+	
+	public void hideWidgetsBounds() {
+		for(SketchController sketch: model.getSketches()) {
+			sketch.hideWidgetsBounds();
+		}
 	}
 	
 	// suspend all state machines except annotations and interactions ones

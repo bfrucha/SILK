@@ -50,6 +50,7 @@ public class PaletteView extends Canvas {
 			e.getValue().setBorder(new LineBorder(model.getBorder()));
 			e.getValue().setBackground(model.getMODES_BG());
 			e.getValue().setLocation(0, init);
+			e.getValue().setOpaque(false);
 			
 			if (e.getKey() == "Annotate")
 			{

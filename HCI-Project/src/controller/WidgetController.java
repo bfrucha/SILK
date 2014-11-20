@@ -38,6 +38,10 @@ public class WidgetController {
 		return view;
 	}
 	
+	public int getType() {
+		return model.getType();
+	}
+	
 	public Rectangle2D getBounds() {
 		return model;
 	}

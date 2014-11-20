@@ -6,6 +6,7 @@ import java.awt.geom.Point2D;
 import java.util.HashMap;
 
 import model.InteractionsModel;
+import model.WidgetModel;
 import view.InteractionsView;
 import view.ProjectView;
 import fr.lri.swingstates.canvas.CPolyLine;
@@ -63,8 +64,6 @@ public class InteractionsController {
 						widgetCaught = project.getWidgetAt(initialPoint);
 						if(widgetCaught == null) {
 							sketchCaught = project.getSketchAt(initialPoint);
-						} else {
-							System.out.println("Caught widget !");
 						}
 						
 						ghost = view.newSegment(initialPoint, initialPoint);
@@ -93,7 +92,8 @@ public class InteractionsController {
 							widgetCaught = project.getWidgetAt(getPoint());
 						}
 						
-						if(widgetCaught != null && sketchCaught != null) {
+						if(widgetCaught != null && sketchCaught != null
+						&& widgetCaught.getType() != WidgetModel.PANEL) {
 							model.addInteraction(widgetCaught, sketchCaught);
 						}
 						
