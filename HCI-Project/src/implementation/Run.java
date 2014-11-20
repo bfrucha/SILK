@@ -20,13 +20,8 @@ public class Run
 			
 			//Compilation
 			try {
-				System.out.println("javac " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getName() + ".java");
 				rt.exec("javac " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getName() + ".java").waitFor();
-				
-				System.out.println("java " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getName());
-				rt.exec("cd "+ folder.getAbsolutePath() + "/");
-				rt.exec("java " + p.getSketches().get(0).getName());
-				
+				rt.exec("java -cp " + folder.getAbsolutePath() + "/" + " " + p.getSketches().get(0).getName());
 			} catch (IOException e) {
 				//e.printStackTrace();
 				System.err.println("Erreur Run.java : erreur lors de la compilation");

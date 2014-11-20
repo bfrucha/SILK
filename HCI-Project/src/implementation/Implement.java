@@ -6,19 +6,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
-import view.WidgetTag;
 import controller.InteractionsController;
 import controller.ProjectController;
 import controller.SketchController;
 import controller.WidgetController;
-import fr.lri.swingstates.canvas.CPolyLine;
 
 public class Implement 
 {
 	
 	private ProjectController project;
 	private InteractionsController interactions;
-	private WidgetTag tag;
 	
 	public Implement(ProjectController p)
 	{
@@ -39,10 +36,7 @@ public class Implement
 				System.err.println("Erreur : Implement.java : createClasses : tout les sketchs n'ont pas un nom différent !");
 				return;
 			}
-			
-			//Shapes de chaque sketch
-			ArrayList<CPolyLine> shapes;
-			
+
 			//Pour chaque sketch
 			for (SketchController s : sketchs)
 			{
@@ -77,6 +71,7 @@ public class Implement
 	//Ne gere que les bouttons pour l'instant
 	private String toWrite(SketchController s, String sketchName)
 	{
+		int i;
 		
 		//On récupère les widgets identifiés de ce sketch
 		ArrayList<WidgetController> widgets = s.getWidgets();
@@ -91,8 +86,8 @@ public class Implement
 		//Declaration de la classe
 		toWrite += "public class "+ sketchName +" extends JFrame implements ActionListener{\n";
 		
+		i=1;
 		//Déclaration des boutons
-		int i = 1;
 		for (WidgetController w : widgets)
 		{
 			toWrite += "\tprivate JButton btn"+ i +";\n";
@@ -110,6 +105,7 @@ public class Implement
 		for (WidgetController w : widgets)
 		{
 			toWrite += "\t\t" + "btn"+i+" = new JButton();\n";
+			toWrite += "\t\t" + "btn"+i+".setText(\" to " + interactions.getInteractions().get(w).getName() + "\");\n";
 			toWrite += "\t\t" + "btn"+i+".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)w.getBounds().getY() + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
 			toWrite += "\t\t" + "btn"+i+".addActionListener(this);\n";
 			toWrite += "\t\t" + "add(btn"+i+");\n\n";

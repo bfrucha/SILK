@@ -69,7 +69,7 @@ public class MainScreen extends JFrame {
 	private void initMenu(final ProjectController pc) {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu impl = new JMenu("Build/Run");
-		JMenuItem build = new JMenuItem("Build");
+		JMenuItem build = new JMenuItem("Write java classes");
 		
 		build.addActionListener(new ActionListener() {
 			@Override
