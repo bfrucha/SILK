@@ -20,6 +20,7 @@ public class Run
 			
 			//Compilation
 			try {
+				System.out.println("javac " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getName() + ".java");
 				rt.exec("javac " + folder.getAbsolutePath() + "/" + p.getSketches().get(0).getName() + ".java").waitFor();
 				rt.exec("java -cp " + folder.getAbsolutePath() + "/" + " " + p.getSketches().get(0).getName());
 			} catch (IOException e) {

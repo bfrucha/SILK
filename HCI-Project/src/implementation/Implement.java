@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
+import view.SketchView;
 import controller.InteractionsController;
 import controller.ProjectController;
 import controller.SketchController;
@@ -99,13 +100,14 @@ public class Implement
 		//Constructeur
 		toWrite += "\tpublic "+ sketchName +"(){\n";
 		toWrite += "\t\tsuper();\n\t\tsetTitle(\""+ sketchName+ "\");\n\t\tsetLayout(null);\n\t\tsetVisible(true);\n";
-		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)s.getSize().getHeight() +"));\n\t\tsetLocation(100, 100);\n\n";
+		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)(s.getSize().getHeight() - SketchView.TB_HEIGHT/2) +"));\n\t\tsetLocation(100, 100);\n\n";
 		
 		i = 1;
 		for (WidgetController w : widgets)
 		{
 			toWrite += "\t\t" + "btn"+i+" = new JButton();\n";
-			toWrite += "\t\t" + "btn"+i+".setText(\" to " + interactions.getInteractions().get(w).getName() + "\");\n";
+			if (interactions.getInteractions().get(w) != null)
+				toWrite += "\t\t" + "btn"+i+".setText(\" to " + interactions.getInteractions().get(w).getName() + "\");\n";
 			toWrite += "\t\t" + "btn"+i+".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)w.getBounds().getY() + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
 			toWrite += "\t\t" + "btn"+i+".addActionListener(this);\n";
 			toWrite += "\t\t" + "add(btn"+i+");\n\n";

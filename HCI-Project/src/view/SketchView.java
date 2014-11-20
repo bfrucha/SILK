@@ -24,7 +24,7 @@ public class SketchView extends Canvas {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private static final int TB_HEIGHT = 35;
+	public static final int TB_HEIGHT = 35;
 
 	public static final LineBorder VALIDE_BORDER = new LineBorder(ProjectView.BG_COLOR);
 	public static final LineBorder INVALIDE_BORDER = new LineBorder(Color.red);
