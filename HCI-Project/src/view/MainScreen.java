@@ -2,16 +2,21 @@ package view;
 
 import implementation.Implement;
 import implementation.Run;
+
 import java.awt.Dimension;
+import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
+
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+
 import model.PaletteModel;
 import model.ProjectModel;
 import controller.PaletteController;
@@ -91,12 +96,7 @@ public class MainScreen extends JFrame {
 		bar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser f = new JFileChooser(new java.io.File("."));
-				f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				int valR = f.showOpenDialog(MainScreen.this);
-				if (valR == JFileChooser.APPROVE_OPTION) {
-					Run r = new Run(new File(f.getSelectedFile().getAbsolutePath()), pc);
-				}
+				Run r = new Run(pc);
 			}
 		});
 		
@@ -107,6 +107,7 @@ public class MainScreen extends JFrame {
 		menuBar.add(impl);
 		setJMenuBar(menuBar);
 	}
+	
 
 	public static void main(String[] args) {
 		new MainScreen(1000, 1000);
