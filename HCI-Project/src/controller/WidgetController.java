@@ -1,9 +1,13 @@
 package controller;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 
+import fr.lri.swingstates.canvas.CPolyLine;
+import fr.lri.swingstates.canvas.CRectangle;
 import model.WidgetModel;
 import view.WidgetView;
 
@@ -15,11 +19,16 @@ public class WidgetController {
 	WidgetModel model;
 	WidgetView view;
 	
-	public WidgetController(SketchController sketch, WidgetModel model, WidgetView view) {
+	CPolyLine ghost;
+	
+	public WidgetController(SketchController sketch, WidgetModel model, WidgetView view, CPolyLine ghost) {
 		this.sketch = sketch;
 		
 		this.model = model;
 		this.view = view;
+		
+		this.ghost = ghost;
+		update();
 	}
 
 	public void setSketch(SketchController sketch) {
@@ -42,6 +51,11 @@ public class WidgetController {
 		return model.getType();
 	}
 	
+	public void setType(int type) {
+		model.setType(type);
+		update();
+	}
+	
 	public Rectangle2D getBounds() {
 		return model;
 	}
@@ -62,7 +76,30 @@ public class WidgetController {
 		return new Point2D.Double(model.getCenterX() + parentLocation.getX(), model.getCenterY() + parentLocation.getY());
 	}
 	
+	// check whether the widget contains a given point
 	public boolean contains(Point2D p) {
 		return model.contains(p);
+	}
+	
+	// check whether the widget contains the given rectangle
+	public boolean contains(CRectangle rectangle) {
+		return model.contains(rectangle.getMinX(), rectangle.getMinY(), rectangle.getWidth(), rectangle.getHeight());
+	}
+	
+	// check whether the widget is inside the given rectangle
+	public boolean containedBy(CRectangle rectangle) {
+		return rectangle.contains(model.getMinX(), model.getMinY(), model.getWidth(), model.getHeight()) != null;
+	}
+	
+	public void update() {
+		// update the color of the line representing the widget
+		ghost.setStroke(new BasicStroke(2));
+		
+		switch(model.getType()) {
+		case WidgetModel.PANEL: ghost.setOutlinePaint(WidgetView.PANEL_PAINT); break;
+		default: ghost.setOutlinePaint(WidgetView.BUTTON_PAINT);
+		}
+		
+		view.update();
 	}
 }

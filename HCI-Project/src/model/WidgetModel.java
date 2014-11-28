@@ -32,7 +32,10 @@ public class WidgetModel extends Rectangle2D.Double {
 		return type;
 	}
 	
+	// need to update this function when adding new type
 	public void setType(int type) {
-		this.type = type;
+		if(type < BUTTON) { this.type = PANEL; }
+		else if(type > PANEL) { this.type = BUTTON; }
+		else { this.type = type; }
 	}
 }

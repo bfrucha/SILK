@@ -98,14 +98,14 @@ public class SketchView extends Canvas {
 		return titleBar.getTitle().contains(point) != null;
 	}
 	
-	// call this method when a widget is recognized
+	/*// call this method when a widget is recognized
 	public void recognizedWidget(CShape shape, int type) {
 		shape.setStroke(new BasicStroke(2));
 		switch(type) {
 		case WidgetModel.PANEL: shape.setOutlinePaint(Color.YELLOW); break;
 		default: shape.setOutlinePaint(Color.GREEN);
 		}
-	}
+	}*/
 	
 	public void update() {
 		Dimension size = model.getSize();

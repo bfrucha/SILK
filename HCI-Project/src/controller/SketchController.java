@@ -43,6 +43,7 @@ public class SketchController {
 	
 	private ArrayList<CStateMachine> machines;
 	private CStateMachine drawMachine;
+	private CStateMachine changeWidgetMachine;
 	private CStateMachine deleteMachine;
 	private CStateMachine moveMachine;
 	private CStateMachine nameMachine;
@@ -72,6 +73,9 @@ public class SketchController {
 		// enable drawing on the Sketch
 		machines.add(drawMachine = attachDrawSM());
 
+		// enable widget's type changing
+		machines.add(changeWidgetMachine = attachWidgetMachine());
+		
 		// enable erasing shapes
 		machines.add(deleteMachine = attachDeleteSM());
 		
@@ -175,12 +179,14 @@ public class SketchController {
 	
 	
 	// creates a widget from a rectangle
-	public WidgetController createWidget(CRectangle bounds, int type) {
+	public WidgetController createWidget(CPolyLine ghost, int type) {
+		CRectangle bounds = ghost.getBoundingBox();
+		
 		WidgetModel model = new WidgetModel(type, bounds.getMinX(), bounds.getMinY(),
 											bounds.getWidth(), bounds.getHeight());
 		WidgetView view = new WidgetView(model);
 		
-		return new WidgetController(this, model, view);
+		return new WidgetController(this, model, view, ghost);
 	}
 	
 	// link copied widgets to the new sketch and update shapeToWidget
@@ -217,6 +223,45 @@ public class SketchController {
 		return widget;
 	}
 	
+	// return the first widget contained by the rectangle
+	public WidgetController getWidgetContainedIn(CRectangle box) {
+		WidgetController widget = null;
+		
+		ArrayList<WidgetController> widgets = model.getWidgets();
+		
+		// from end to start to respect widgets order
+		int index = widgets.size() - 1;
+		while(widget == null && index >= 0) {
+			WidgetController tmp = widgets.get(index--);
+			
+			if(tmp.containedBy(box)) {
+				widget = tmp;
+			}
+		}
+		
+		return widget;
+	}
+	
+	
+	// return the first widget containing the rectangle
+	public WidgetController getWidgetContaining(CRectangle box) {
+		WidgetController widget = null;
+		
+		ArrayList<WidgetController> widgets = model.getWidgets();
+		
+		// from end to start to respect widgets order
+		int index = widgets.size() - 1;
+		while(widget == null && index >= 0) {
+			WidgetController tmp = widgets.get(index--);
+			
+			// second getBounds() to cast to Rectangle
+			if(tmp.contains(box)) {
+				widget = tmp;
+			}
+		}
+		
+		return widget;
+	}
 	
 	// show widgets' bounds
 	public void showWidgetsBounds() {
@@ -231,6 +276,9 @@ public class SketchController {
 			view.removeShape(widget.getView());
 		}
 	}
+	
+	
+	/** STATEMACHINES **/
 	
 	// enable draw on the sketch
 	private CStateMachine attachDrawSM() {
@@ -281,9 +329,7 @@ public class SketchController {
 								type = WidgetModel.PANEL;
 							}
 							
-							view.recognizedWidget(line, type);
-							
-							WidgetController widget = createWidget(line.getBoundingBox(), type);
+							WidgetController widget = createWidget(line, type);
 							model.addWidget(widget);
 							
 							shapeToWidget.put(line, widget);
@@ -295,9 +341,37 @@ public class SketchController {
 		};
 	}
 	
+	// enable changing type of a widget
+	private CStateMachine attachWidgetMachine() {
+		return new GestureSM(view, GestureSM.CIRCLE_TRIGO) {
+			
+			public void gestureRecognized() {
+				CRectangle box = gesture.asPolyLine().getBoundingBox();
+				
+				WidgetController widget = getWidgetContainedIn(box);
+				if(widget == null) {
+					widget = getWidgetContaining(box);
+				}
+				
+				if(widget != null) {
+					if(classifier.classify(gesture).equals("circle_trigo")) {
+						// decrease type number
+						widget.setType(widget.getType() + 1);
+					} else {
+						// increase type number
+						widget.setType(widget.getType() - 1);
+					}
+					
+					view.repaint();
+				}
+			}
+			
+		};
+	}
+	
 	// enable erasing shapes on view
 	private CStateMachine attachDeleteSM() {
-		return new DeleteShapeSM(view) {
+		return new GestureSM(view, GestureSM.PIGTAIL) {
 			public void gestureRecognized() {
 				model.removeShape((CPolyLine) caught);
 				view.removeShape(caught);

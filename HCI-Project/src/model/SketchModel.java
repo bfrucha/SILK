@@ -46,13 +46,15 @@ public class SketchModel {
 			addShape(cloneLine);
 		}
 		
+		int shapeIndex = 0;
+		
 		widgets = new ArrayList<WidgetController>();
 		for(WidgetController widget: clone.getWidgets()) {
 			WidgetModel cloneModel = new WidgetModel(widget.getModel());
 			WidgetView cloneView = new WidgetView(cloneModel);
 			
 			// little problem here, no sketch controller to associate
-			widgets.add(new WidgetController(null, cloneModel, cloneView));
+			widgets.add(new WidgetController(null, cloneModel, cloneView, shapes.get(shapeIndex++)));
 		}
 	}
 	

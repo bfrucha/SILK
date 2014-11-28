@@ -73,6 +73,7 @@ public class AnnotationsController {
 						ghost.setFilled(false);
 						ghost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
 						ghost.setStroke(new BasicStroke(2));
+						ghost.setPickable(false);
 						
 						caughtShapes = new ArrayList<CShape>();
 					}
@@ -84,12 +85,10 @@ public class AnnotationsController {
 					public void action() {
 						ghost.lineTo(getPoint());
 						
-						view.removeShape(ghost);
-						CShape shape = view.contains(getPoint());
-						view.addShape(ghost);
+						CShape shape = view.pick(getPoint());
+						
 						if(shape != null && !(shape instanceof CRectangle)) {
 							caughtShapes.add(shape);
-							System.out.println("Caught !");
 						}
 					}
 				};

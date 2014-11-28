@@ -109,7 +109,7 @@ public class InteractionsController {
 	}
 	
 	public CStateMachine attachDeleteSM() {
-		return new DeleteShapeSM(view) {
+		return new GestureSM(view, GestureSM.PIGTAIL) {
 			public void gestureRecognized() {
 				model.removeInteraction((CSegment) caught);
 				view.removeShape(caught);
