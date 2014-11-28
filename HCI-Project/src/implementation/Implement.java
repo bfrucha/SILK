@@ -1,11 +1,15 @@
 package implementation;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
+import view.MainScreen;
 import view.SketchView;
 import controller.InteractionsController;
 import controller.ProjectController;
@@ -17,10 +21,13 @@ public class Implement
 	
 	private ProjectController project;
 	private InteractionsController interactions;
+	private MainScreen mainscreen;
 	
-	public Implement(ProjectController p)
+	public Implement(ProjectController p, MainScreen m)
 	{
 		project = p;
+		mainscreen = m;
+		
 		interactions = project.getInteractionsController();
 	}
 	
@@ -100,7 +107,15 @@ public class Implement
 		//Constructeur
 		toWrite += "\tpublic "+ sketchName +"(){\n";
 		toWrite += "\t\tsuper();\n\t\tsetTitle(\""+ sketchName+ "\");\n\t\tsetLayout(null);\n\t\tsetVisible(true);\n";
-		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)(s.getSize().getHeight() - SketchView.TB_HEIGHT/2) +"));\n\t\tsetLocation(100, 100);\n\n";
+		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)(s.getSize().getHeight() - SketchView.TB_HEIGHT/2) +"));\n";
+		
+		//Determine la position du sketch dans l'interface pour la mapper à l'écran
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //taille de l'écran
+		Dimension mainscreenSize = mainscreen.getSize();
+		int x = (int)((s.getLocation().getX() / mainscreenSize.width) * screenSize.width);
+		int y = (int)((s.getLocation().getY() / mainscreenSize.height) * screenSize.height);
+		toWrite += "\t\tsetLocation("+ x +", "+ y +");\n\n";
+		
 		
 		i = 1;
 		for (WidgetController w : widgets)
