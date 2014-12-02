@@ -50,8 +50,6 @@ public class ProjectController {
 	public ProjectController(ProjectModel model, ProjectView view) {
 		this.model = model;
 		this.view = view;
-
-		keySM();
 		
 		// enable creation of sketches
 		creationMachine = attachCreationSM();
@@ -193,22 +191,6 @@ public class ProjectController {
 						calque.removeShape(actionGhost);
 						view.remove(calque);
 						view.repaint();
-					}
-				};
-			};
-		};
-	}
-	
-	public void keySM() {
-		new CStateMachine(view) {
-			State listen = new State() {
-				Transition key = new KeyPress() {
-					public void action() {
-						switch(getChar()) {
-						case 'a': case 'A': changeMode(ANNOTATIONS_MODE); break;
-						case 'i': case 'I': changeMode(INTERACTIONS_MODE); break;
-						case 'w': case'W': changeMode(WIDGETS_MODE); break;
-						}
 					}
 				};
 			};

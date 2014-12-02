@@ -77,9 +77,10 @@ public abstract class GestureSM extends CStateMachine {
 				if(classifier.classify(gesture) != null && !(caught instanceof CRectangle)) {
 					gestureRecognized();
 					
-					caught = null;
 					view.repaint();
 				}
+				
+				caught = null;
 			}
 		};
 	};

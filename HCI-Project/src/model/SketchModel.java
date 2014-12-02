@@ -3,6 +3,7 @@ package model;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import view.WidgetView;
 import controller.WidgetController;
@@ -17,7 +18,7 @@ public class SketchModel {
 	
 	private ArrayList<CPolyLine> shapes;
 	
-	private ArrayList<WidgetController> widgets;
+	private LinkedList<WidgetController> widgets;
 	
 	public SketchModel(String name, Point tlc, Dimension dimension) {
 		this.name = name;
@@ -25,7 +26,7 @@ public class SketchModel {
 		this.size = dimension;
 		
 		shapes = new ArrayList<CPolyLine>();
-		widgets = new ArrayList<WidgetController>();
+		widgets = new LinkedList<WidgetController>();
 	}
 	
 	public SketchModel(SketchModel clone) {
@@ -39,22 +40,30 @@ public class SketchModel {
 		size.width = clone.getSize().width;
 		size.height = clone.getSize().height;
 		
-		shapes = new ArrayList<CPolyLine>();
-		for(CPolyLine line: clone.getShapes()) {
-			CPolyLine cloneLine = (CPolyLine) line.copyTo(new CPolyLine());
-			cloneLine.remove();
-			addShape(cloneLine);
-		}
-		
-		int shapeIndex = 0;
-		
-		widgets = new ArrayList<WidgetController>();
+		widgets = new LinkedList<WidgetController>();
 		for(WidgetController widget: clone.getWidgets()) {
 			WidgetModel cloneModel = new WidgetModel(widget.getModel());
 			WidgetView cloneView = new WidgetView(cloneModel);
 			
 			// little problem here, no sketch controller to associate
-			widgets.add(new WidgetController(null, cloneModel, cloneView, shapes.get(shapeIndex++)));
+			// TODO: duplication keeps track of shape
+			widgets.add(new WidgetController(null, cloneModel, cloneView, widget.getGhost()));
+		}
+		
+		shapes = new ArrayList<CPolyLine>();
+		for(CPolyLine line: clone.getShapes()) {
+			CPolyLine cloneLine = new CPolyLine();
+			line.copyTo(cloneLine);
+			cloneLine.remove();
+			addShape(cloneLine);
+			
+			// keeps cloned shape as a ghost
+			int widgetIndex = 0;
+			while(widgetIndex < widgets.size() && !widgets.get(widgetIndex).getGhost().equals(line)) {
+				widgetIndex++;
+			}
+			// this shape is the clone of the old one
+			if(widgetIndex < widgets.size()) { widgets.get(widgetIndex).setGhost(cloneLine); }
 		}
 	}
 	
@@ -122,13 +131,26 @@ public class SketchModel {
 	}
 	
 	// get all the widgets contained in this Sketch
-	public ArrayList<WidgetController> getWidgets() {
+	public LinkedList<WidgetController> getWidgets() {
 		return widgets;
 	}
 	
 	// add a widget to the list
 	public void addWidget(WidgetController widget) {
-		widgets.add(widget);
+		// panels are on the background
+		if(widget.getType() == WidgetModel.PANEL) {
+			int index = 0;
+			
+			// smaller widgets are toper
+			while(index < widgets.size() && 
+				  widgets.get(index).getType() == WidgetModel.PANEL &&
+				  widgets.get(index).getWidth() >= widget.getWidth() && widgets.get(index).getHeight() >= widget.getHeight()) {
+				index++;
+			}
+			widgets.add(index, widget);
+		} else {
+			widgets.add(widget);
+		}
 	}
 	
 	// remove specified widget from the list

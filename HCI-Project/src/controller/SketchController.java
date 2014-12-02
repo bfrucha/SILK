@@ -7,6 +7,7 @@ import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 import javax.swing.JTextField;
 
@@ -105,7 +106,7 @@ public class SketchController {
 		return view;
 	}
 	
-	public ArrayList<WidgetController> getWidgets() {
+	public LinkedList<WidgetController> getWidgets() {
 		return model.getWidgets();
 	}
 	
@@ -191,14 +192,11 @@ public class SketchController {
 	
 	// link copied widgets to the new sketch and update shapeToWidget
 	public void linkWidgets() {
-		ArrayList<WidgetController> widgets = model.getWidgets();
-		ArrayList<CPolyLine> shapes = model.getShapes();
+		shapeToWidget = new HashMap<CShape, WidgetController>();
 		
-		for(int index = 0; index <  widgets.size(); index++) {
-			// shapes and widgets should be ordered the same way
-			shapeToWidget.put(shapes.get(index), widgets.get(index));
-			
-			widgets.get(index).setSketch(this);
+		for(WidgetController widget: model.getWidgets()) {
+			widget.setSketch(this);
+			shapeToWidget.put(widget.getGhost(), widget);
 		}
 	}
 	
@@ -208,7 +206,7 @@ public class SketchController {
 		Point2D location = model.getLocation();
 		Point2D relativePoint = new Point2D.Double(p.getX() - location.getX(), p.getY() - location.getY());
 		
-		ArrayList<WidgetController> widgets = model.getWidgets();
+		LinkedList<WidgetController> widgets = model.getWidgets();
 		
 		// from end to start to respect widgets order
 		int index = widgets.size() - 1;
@@ -227,7 +225,7 @@ public class SketchController {
 	public WidgetController getWidgetContainedIn(CRectangle box) {
 		WidgetController widget = null;
 		
-		ArrayList<WidgetController> widgets = model.getWidgets();
+		LinkedList<WidgetController> widgets = model.getWidgets();
 		
 		// from end to start to respect widgets order
 		int index = widgets.size() - 1;
@@ -247,7 +245,7 @@ public class SketchController {
 	public WidgetController getWidgetContaining(CRectangle box) {
 		WidgetController widget = null;
 		
-		ArrayList<WidgetController> widgets = model.getWidgets();
+		LinkedList<WidgetController> widgets = model.getWidgets();
 		
 		// from end to start to respect widgets order
 		int index = widgets.size() - 1;
@@ -277,6 +275,21 @@ public class SketchController {
 		}
 	}
 	
+	// propose a type for the new widget
+	public int typeChoice(Dimension sketchSize, CRectangle bounds) {
+		int type = WidgetModel.BUTTON;
+		
+		// half of the sketch => PANEL
+		if(bounds.getWidth() >= sketchSize.width/2 
+		&& bounds.getHeight() >= sketchSize.height/2) {
+			type = WidgetModel.PANEL;
+		}
+		// bounds' width > 4 * bounds' height => TEXT_FIELD
+		else if(bounds.getWidth() > 4*bounds.getHeight()) {
+			type = WidgetModel.TEXT_FIELD;
+		}
+		return type;
+	}
 	
 	/** STATEMACHINES **/
 	
@@ -320,14 +333,7 @@ public class SketchController {
 					public void action() {
 						if(widgetClassifier.classify(gesture) != null) {
 							// best guess for widget's type
-							Dimension sketchSize = getSize();
-							CRectangle bounds = line.getBoundingBox();
-							
-							int type = WidgetModel.BUTTON;
-							if(bounds.getWidth() >= sketchSize.width/2 
-							&& bounds.getHeight() >= sketchSize.height/2) {
-								type = WidgetModel.PANEL;
-							}
+							int type = typeChoice(getSize(), line.getBoundingBox());
 							
 							WidgetController widget = createWidget(line, type);
 							model.addWidget(widget);
@@ -361,6 +367,10 @@ public class SketchController {
 						// increase type number
 						widget.setType(widget.getType() - 1);
 					}
+					
+					// update widget order
+					model.removeWidget(widget);
+					model.addWidget(widget);
 					
 					view.repaint();
 				}

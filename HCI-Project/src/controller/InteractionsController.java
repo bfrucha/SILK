@@ -39,7 +39,7 @@ public class InteractionsController {
 	}
 
 	// get all widget -> sketch interactions from the model
-	public HashMap<WidgetController, SketchController> getInteractions() {
+	public HashMap<WidgetController, Object> getInteractions() {
 		return model.getInteractions();
 	}
 	
@@ -53,18 +53,17 @@ public class InteractionsController {
 		 	CSegment ghost;
 			Point2D initialPoint;
 			
-			WidgetController widgetCaught;
-			SketchController sketchCaught;
+			WidgetController initialWidget;
+			SketchController initialSketch;
 		 	
 			State wait = new State() {
 				Transition press = new Press(BUTTON1, ">> drawing") {
 					public void action() {
 						initialPoint = getPoint();
 						
-						widgetCaught = project.getWidgetAt(initialPoint);
-						if(widgetCaught == null) {
-							sketchCaught = project.getSketchAt(initialPoint);
-						}
+						initialWidget = project.getWidgetAt(initialPoint);
+						
+						initialSketch = project.getSketchAt(initialPoint);
 						
 						ghost = view.newSegment(initialPoint, initialPoint);
 						ghost.setFilled(false);
@@ -78,30 +77,38 @@ public class InteractionsController {
 			State drawing = new State() {
 				Transition drag = new Drag() {
 					public void action() {
-						ghost.setPoints(initialPoint, getPoint());
+						// draw only if a widget has been caught
+						if(initialWidget != null) {
+							ghost.setPoints(initialPoint, getPoint());
+						}
 					}
 				};
 				
 				Transition release = new Release(">> wait") {
 					public void action() {
-						if(sketchCaught == null) {
-							// click on widget on first state
-							sketchCaught = project.getSketchAt(getPoint());
-						} else {
-							// click on sketch on first state
-							widgetCaught = project.getWidgetAt(getPoint());
+						if(initialWidget != null) {
+							// get elements under last mouse position
+							WidgetController widgetCaught = project.getWidgetAt(getPoint());
+							SketchController sketchCaught = project.getSketchAt(getPoint());
+							
+							
+							HashMap<WidgetController, Object> interactions = model.getInteractions();
+							// link two widgets
+							if(initialSketch == sketchCaught && widgetCaught != null) {
+								model.addInteraction(initialWidget, widgetCaught);
+							}
+							// link a widget with a sketch
+							else if(sketchCaught != null && initialWidget.getType() == WidgetModel.BUTTON) {
+								System.out.println("Widget => sketch");
+								model.addInteraction(initialWidget, sketchCaught);
+							}
+							
+							ghost.remove();
+							view.update();
+							view.repaint();
+							
+							initialWidget = null; initialSketch = null;
 						}
-						
-						if(widgetCaught != null && sketchCaught != null
-						&& widgetCaught.getType() != WidgetModel.PANEL) {
-							model.addInteraction(widgetCaught, sketchCaught);
-						}
-						
-						ghost.remove();
-						view.update();
-						view.repaint();
-						
-						widgetCaught = null; sketchCaught = null;
 					}
 				};
 			};

@@ -1,15 +1,12 @@
 package implementation;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 
-import view.MainScreen;
 import view.SketchView;
 import controller.InteractionsController;
 import controller.ProjectController;
@@ -21,13 +18,10 @@ public class Implement
 	
 	private ProjectController project;
 	private InteractionsController interactions;
-	private MainScreen mainscreen;
 	
-	public Implement(ProjectController p, MainScreen m)
+	public Implement(ProjectController p)
 	{
 		project = p;
-		mainscreen = m;
-		
 		interactions = project.getInteractionsController();
 	}
 	
@@ -82,7 +76,7 @@ public class Implement
 		int i;
 		
 		//On récupère les widgets identifiés de ce sketch
-		ArrayList<WidgetController> widgets = s.getWidgets();
+		LinkedList<WidgetController> widgets = s.getWidgets();
 		
 		//Préparation du string a ecrire dans le fichier
 		String toWrite = "";
@@ -107,22 +101,14 @@ public class Implement
 		//Constructeur
 		toWrite += "\tpublic "+ sketchName +"(){\n";
 		toWrite += "\t\tsuper();\n\t\tsetTitle(\""+ sketchName+ "\");\n\t\tsetLayout(null);\n\t\tsetVisible(true);\n";
-		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)(s.getSize().getHeight() - SketchView.TB_HEIGHT/2) +"));\n";
-		
-		//Determine la position du sketch dans l'interface pour la mapper à l'écran
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //taille de l'écran
-		Dimension mainscreenSize = mainscreen.getSize();
-		int x = (int)((s.getLocation().getX() / mainscreenSize.width) * screenSize.width);
-		int y = (int)((s.getLocation().getY() / mainscreenSize.height) * screenSize.height);
-		toWrite += "\t\tsetLocation("+ x +", "+ y +");\n\n";
-		
+		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)(s.getSize().getHeight() - SketchView.TB_HEIGHT/2) +"));\n\t\tsetLocation(100, 100);\n\n";
 		
 		i = 1;
 		for (WidgetController w : widgets)
 		{
 			toWrite += "\t\t" + "btn"+i+" = new JButton();\n";
 			if (interactions.getInteractions().get(w) != null)
-				toWrite += "\t\t" + "btn"+i+".setText(\" to " + interactions.getInteractions().get(w).getName() + "\");\n";
+				toWrite += "\t\t" + "btn"+i+".setText(\" to " + ((SketchController) interactions.getInteractions().get(w)).getName() + "\");\n";
 			toWrite += "\t\t" + "btn"+i+".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)w.getBounds().getY() + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
 			toWrite += "\t\t" + "btn"+i+".addActionListener(this);\n";
 			toWrite += "\t\t" + "add(btn"+i+");\n\n";
@@ -137,13 +123,13 @@ public class Implement
 		
 		if (!interactions.getInteractions().isEmpty()) //Si il existe des interactions
 		{
-			for (Entry<WidgetController, SketchController> e : interactions.getInteractions().entrySet())
+			for (Entry<WidgetController, Object> e : interactions.getInteractions().entrySet())
 			{
 				int idWid = widgets.indexOf(e.getKey()) + 1;
 				if (idWid != 0)
 				{
 					toWrite += "\t\t" + "if (e.getSource() == btn"+ idWid + "){\n";
-					toWrite += "\t\t\t" + e.getValue().getName().replaceAll("\\s+","") + " frame = new " + e.getValue().getName().replaceAll("\\s+","") + "();\n";
+					toWrite += "\t\t\t" + ((SketchController) e.getValue()).getName().replaceAll("\\s+","") + " frame = new " + ((SketchController) e.getValue()).getName().replaceAll("\\s+","") + "();\n";
 					toWrite += "\t\t" + "}\n";
 				}
 			}

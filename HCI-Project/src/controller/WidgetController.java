@@ -47,6 +47,15 @@ public class WidgetController {
 		return view;
 	}
 	
+	public CPolyLine getGhost() {
+		return ghost;
+	}
+	
+	public void setGhost(CPolyLine ghost) {
+		System.out.println(ghost);
+		this.ghost = ghost;
+	}
+	
 	public int getType() {
 		return model.getType();
 	}
@@ -54,6 +63,14 @@ public class WidgetController {
 	public void setType(int type) {
 		model.setType(type);
 		update();
+	}
+	
+	public double getWidth() {
+		return model.width;
+	}
+	
+	public double getHeight() {
+		return model.height;
 	}
 	
 	public Rectangle2D getBounds() {
@@ -96,8 +113,9 @@ public class WidgetController {
 		ghost.setStroke(new BasicStroke(2));
 		
 		switch(model.getType()) {
-		case WidgetModel.PANEL: ghost.setOutlinePaint(WidgetView.PANEL_PAINT); break;
-		default: ghost.setOutlinePaint(WidgetView.BUTTON_PAINT);
+		case WidgetModel.BUTTON: ghost.setOutlinePaint(WidgetView.BUTTON_PAINT); break;
+		case WidgetModel.TEXT_FIELD: ghost.setOutlinePaint(WidgetView.TF_PAINT); break;
+		default: ghost.setOutlinePaint(WidgetView.PANEL_PAINT);
 		}
 		
 		view.update();

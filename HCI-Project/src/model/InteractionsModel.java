@@ -8,18 +8,18 @@ import fr.lri.swingstates.canvas.CSegment;
 
 public class InteractionsModel {
 
-	private HashMap<WidgetController, SketchController> interactions;
+	private HashMap<WidgetController, Object> interactions;
 	
 	private HashMap<CSegment, WidgetController> segments;
 	
 	public InteractionsModel() {
-		interactions = new HashMap<WidgetController, SketchController>();
+		interactions = new HashMap<WidgetController, Object>();
 		segments = new HashMap<CSegment, WidgetController>();
 	}
 
 	// add a link between a widget and a sketch
-	public void addInteraction(WidgetController widget, SketchController sketch) {
-		interactions.put(widget, sketch);
+	public void addInteraction(WidgetController widget, Object controller) {
+		interactions.put(widget, controller);
 	}
 	
 	// remove interaction for a given widget
@@ -27,7 +27,7 @@ public class InteractionsModel {
 		interactions.remove(widget);
 	}
 	
-	public HashMap<WidgetController, SketchController> getInteractions() {
+	public HashMap<WidgetController, Object> getInteractions() {
 		return interactions;
 	}
 	

@@ -2,6 +2,7 @@ package view;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -23,6 +24,7 @@ public class InteractionsView extends Canvas {
 
 	static public final Color OPEN_PAINT = Color.orange;
 	static public final Color CLOSE_PAINT = Color.magenta;
+	static public final Color LINK_PAINT = new Color(0xcc, 0x10, 0x10);
 	
 	ProjectView parent;
 	
@@ -51,19 +53,35 @@ public class InteractionsView extends Canvas {
 		background.setOutlined(false);
 		background.setFillPaint(new Color(255, 255, 255, 100));
 		
-		for(Entry<WidgetController, SketchController> interaction: model.getInteractions().entrySet()) {
+		for(Entry<WidgetController, Object> interaction: model.getInteractions().entrySet()) {
 			WidgetController widget = interaction.getKey();
-			SketchController sketch = interaction.getValue();
+			Point2D widgetCenter = widget.getAbsoluteCenter();
 			
-			CSegment segment = newSegment(widget.getAbsoluteCenter(), sketch.getLocation());
+			Object controller = interaction.getValue();
+			
+			System.out.println(widget + " " + controller);
+			
+			CSegment segment = newSegment(widgetCenter, widgetCenter);
 			segment.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, dash_phase, dash_offset));
 			
-			if(widget.getSketch() != sketch) {
-				segment.setOutlinePaint(OPEN_PAINT);
-			}
+			// widget => sketch
+			if(controller instanceof SketchController) {
+				segment.setPoints(widgetCenter, ((SketchController) controller).getLocation());
+			
+				if(widget.getSketch() != controller) {
+					segment.setOutlinePaint(OPEN_PAINT);
+				}
+				else {
+					segment.setOutlinePaint(CLOSE_PAINT);
+				}
+			} 
+			// widget => widget
 			else {
-				segment.setOutlinePaint(CLOSE_PAINT);
+				segment.setPoints(widgetCenter, ((WidgetController) controller).getAbsoluteCenter());
+				
+				segment.setOutlinePaint(LINK_PAINT);
 			}
+			
 			model.addSegment(segment, widget);
 		}
 	}
