@@ -30,6 +30,8 @@ public class WidgetView extends CRectangle {
 		
 		setStroke(new BasicStroke(2));
 		update();
+		
+		setDrawable(false);
 	}
 	
 	public void update() {

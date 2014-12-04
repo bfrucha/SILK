@@ -1,10 +1,12 @@
 package controller;
 
 import java.awt.geom.Point2D;
+import java.util.LinkedList;
 
 import view.ProjectView;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
+import fr.lri.swingstates.canvas.CSegment;
 import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.Canvas;
@@ -65,8 +67,18 @@ public abstract class GestureSM extends CStateMachine {
 				ghost.lineTo(mouse);
 				
 				// catch the shape below the gesture
-				if(caught == null || caught instanceof CRectangle) {
-					caught = view.pick(mouse);
+				if(caught == null) {
+					LinkedList<CShape> shapesCaught = view.pickAll(mouse);
+					
+					int index = 0;
+					while(index < shapesCaught.size() && 
+							(!(caught instanceof CPolyLine) || !(caught instanceof CSegment))) {
+						caught = shapesCaught.get(index++);
+					}
+					
+					System.out.println(caught);
+					// we want to pick a line
+					if(!(caught instanceof CPolyLine) && !(caught instanceof CSegment)) { caught = null; }
 				}
 			}
 		};
@@ -74,7 +86,7 @@ public abstract class GestureSM extends CStateMachine {
 		Transition release = new Release(BUTTON3, ">> init") {
 			public void action() {
 				view.removeShape(ghost);
-				if(classifier.classify(gesture) != null && !(caught instanceof CRectangle)) {
+				if(classifier.classify(gesture) != null) {
 					gestureRecognized();
 					
 					view.repaint();

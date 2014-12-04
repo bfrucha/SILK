@@ -8,7 +8,16 @@ import java.util.HashMap;
 
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
+import fr.lri.swingstates.canvas.CStateMachine;
+import fr.lri.swingstates.canvas.CText;
+import fr.lri.swingstates.canvas.transitions.EnterOnShape;
+import fr.lri.swingstates.canvas.transitions.LeaveOnShape;
+import fr.lri.swingstates.canvas.transitions.MoveOnShape;
+import fr.lri.swingstates.sm.State;
+import fr.lri.swingstates.sm.Transition;
+import fr.lri.swingstates.sm.transitions.Drag;
 import model.WidgetModel;
+import view.SketchView;
 import view.WidgetView;
 
 public class WidgetController {
@@ -21,6 +30,8 @@ public class WidgetController {
 	
 	CPolyLine ghost;
 	
+	CStateMachine popUpMachine;
+	
 	public WidgetController(SketchController sketch, WidgetModel model, WidgetView view, CPolyLine ghost) {
 		this.sketch = sketch;
 		
@@ -28,6 +39,7 @@ public class WidgetController {
 		this.view = view;
 		
 		this.ghost = ghost;
+		
 		update();
 	}
 

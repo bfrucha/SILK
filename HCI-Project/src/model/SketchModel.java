@@ -46,7 +46,6 @@ public class SketchModel {
 			WidgetView cloneView = new WidgetView(cloneModel);
 			
 			// little problem here, no sketch controller to associate
-			// TODO: duplication keeps track of shape
 			widgets.add(new WidgetController(null, cloneModel, cloneView, widget.getGhost()));
 		}
 		

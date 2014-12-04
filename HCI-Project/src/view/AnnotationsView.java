@@ -25,6 +25,7 @@ public class AnnotationsView extends Canvas {
 		background = newRectangle(0, 0, 1, 1);
 		background.setOutlined(false);
 		background.setFillPaint(new Color(100, 100, 100, 100));
+		background.setPickable(false);
 	}
 	
 	public void display() {

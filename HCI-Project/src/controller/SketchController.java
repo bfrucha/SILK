@@ -1,6 +1,8 @@
 package controller;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -17,6 +19,9 @@ import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.CText;
 import fr.lri.swingstates.canvas.Canvas;
+import fr.lri.swingstates.canvas.transitions.EnterOnShape;
+import fr.lri.swingstates.canvas.transitions.LeaveOnShape;
+import fr.lri.swingstates.canvas.transitions.MoveOnShape;
 import fr.lri.swingstates.canvas.transitions.PressOnShape;
 import fr.lri.swingstates.canvas.transitions.ReleaseOnShape;
 import fr.lri.swingstates.gestures.Gesture;
@@ -45,6 +50,7 @@ public class SketchController {
 	private ArrayList<CStateMachine> machines;
 	private CStateMachine drawMachine;
 	private CStateMachine changeWidgetMachine;
+	private CStateMachine popUpMachine;
 	private CStateMachine deleteMachine;
 	private CStateMachine moveMachine;
 	private CStateMachine nameMachine;
@@ -76,6 +82,9 @@ public class SketchController {
 
 		// enable widget's type changing
 		machines.add(changeWidgetMachine = attachWidgetMachine());
+		
+		// enable display widget's type
+		machines.add(popUpMachine = attachPopUpSM());
 		
 		// enable erasing shapes
 		machines.add(deleteMachine = attachDeleteSM());
@@ -196,6 +205,9 @@ public class SketchController {
 		
 		for(WidgetController widget: model.getWidgets()) {
 			widget.setSketch(this);
+			
+			view.addShape(widget.getView());
+			
 			shapeToWidget.put(widget.getGhost(), widget);
 		}
 	}
@@ -264,14 +276,14 @@ public class SketchController {
 	// show widgets' bounds
 	public void showWidgetsBounds() {
 		for(WidgetController widget: model.getWidgets()) {
-			view.addShape(widget.getView());
+			widget.getView().setDrawable(true);
 		}
 	}
 	
 	// hides widgets' bounds
 	public void hideWidgetsBounds() {
 		for(WidgetController widget: model.getWidgets()) {
-			view.removeShape(widget.getView());
+			widget.getView().setDrawable(false);
 		}
 	}
 	
@@ -336,7 +348,13 @@ public class SketchController {
 							int type = typeChoice(getSize(), line.getBoundingBox());
 							
 							WidgetController widget = createWidget(line, type);
+							view.addShape(widget.getView());
+							
 							model.addWidget(widget);
+							
+							for(WidgetController tmp: model.getWidgets()) {
+								tmp.getView().aboveAll();
+							}
 							
 							shapeToWidget.put(line, widget);
 						}
@@ -368,6 +386,8 @@ public class SketchController {
 						widget.setType(widget.getType() - 1);
 					}
 					
+					popUpMachine.reset();
+					
 					// update widget order
 					model.removeWidget(widget);
 					model.addWidget(widget);
@@ -379,6 +399,85 @@ public class SketchController {
 		};
 	}
 	
+	
+	// attach a pop up machine that display the widget type on mouse over
+	public CStateMachine attachPopUpSM() {
+		return new CStateMachine(view) {
+		
+			CText text;
+			CRectangle textBackground;
+			
+			WidgetView widgetView;
+			
+			public void doReset() {
+				super.doReset();
+				
+				if(text != null) { text.remove(); }
+				if(textBackground != null) { textBackground.remove(); }
+			}
+			
+			State out = new State() {
+				Transition enter = new EnterOnShape(">> over") {
+					// just check if the shape is a WidgetView
+					public boolean guard() { return getShape() instanceof WidgetView; }
+					
+					public void action() {
+						widgetView = (WidgetView) getShape();
+						
+						LinkedList<WidgetController> widgets = model.getWidgets();
+						
+						// we want the controller of the widget
+						int widgetIndex = 0;
+						WidgetController widgetController = widgets.get(widgetIndex);
+						
+						while(widgetIndex < widgets.size() && !widgetController.getView().equals(widgetView)) {
+							widgetController = widgets.get(++widgetIndex);
+						}
+						
+						String type; int space;
+						switch(widgetController.getType()) {
+						case WidgetModel.BUTTON: type = "Button"; space = 45; break;
+						case WidgetModel.TEXT_FIELD: type = "Text field"; space = 60; break;
+						default: type = "Panel"; space = 40;
+						}
+						
+						textBackground = view.newRectangle(getPoint(), space, 15);
+						textBackground.setFillPaint(new Color(0xb8, 0xcf, 0xe5));
+						textBackground.setOutlinePaint(new Color(0x63, 0x82, 0xbf));
+						textBackground.setReferencePoint(0, 0);
+						textBackground.setPickable(false);
+						
+						text = view.newText(getPoint(), type);
+						text.setOutlinePaint(java.awt.Color.BLACK);
+						text.setReferencePoint(0, 0);
+						text.setPickable(false);
+					}
+				};
+			};
+			
+			State over = new State() {
+				Transition drag = new MoveOnShape() {
+					public boolean guard() { return getShape().equals(widgetView); }
+					
+					public void action() {
+						text.translateTo(getPoint().getX() + 10, getPoint().getY() + 10);
+						textBackground.translateTo(getPoint().getX() + 8, getPoint().getY() + 8);
+					}
+				};
+
+				Transition leave = new LeaveOnShape(">> out") {
+					public boolean guard() { return getShape().equals(widgetView); }
+					
+					public void action() { 
+						view.removeShape(text);
+						view.removeShape(textBackground);
+					}
+				};
+			};
+		};
+	}
+	
+	
 	// enable erasing shapes on view
 	private CStateMachine attachDeleteSM() {
 		return new GestureSM(view, GestureSM.PIGTAIL) {
@@ -389,12 +488,16 @@ public class SketchController {
 				// delete widget associated to this shape if it exists
 				WidgetController widget = shapeToWidget.get(caught); 
 				if(widget != null) {
+					popUpMachine.suspend();
+					view.removeShape(widget.getView());
 					model.removeWidget(widget);
 					
 					// warn the project that a widget has been removed
 					project.removeWidget(widget);
 					
 					shapeToWidget.remove(caught);
+					popUpMachine.resume();
+					popUpMachine.reset();
 				}
 			}
 		};

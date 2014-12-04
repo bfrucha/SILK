@@ -52,14 +52,13 @@ public class InteractionsView extends Canvas {
 		CRectangle background = newRectangle(0, 0, width, height);
 		background.setOutlined(false);
 		background.setFillPaint(new Color(255, 255, 255, 100));
+		background.setPickable(false);
 		
 		for(Entry<WidgetController, Object> interaction: model.getInteractions().entrySet()) {
 			WidgetController widget = interaction.getKey();
 			Point2D widgetCenter = widget.getAbsoluteCenter();
 			
 			Object controller = interaction.getValue();
-			
-			System.out.println(widget + " " + controller);
 			
 			CSegment segment = newSegment(widgetCenter, widgetCenter);
 			segment.setStroke(new BasicStroke(2, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, dash_phase, dash_offset));
