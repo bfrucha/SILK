@@ -40,4 +40,8 @@ public class InteractionsModel {
 	public void removeInteraction(CSegment segment) {
 		System.out.println(interactions.remove(segments.get(segment)));
 	}
+	
+	public WidgetController getWidgetFromSegment(CSegment segment) {
+		return segments.get(segment);
+	}
 }

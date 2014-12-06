@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
+import controller.ActionList.Action;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
 import fr.lri.swingstates.canvas.CShape;
@@ -46,6 +47,7 @@ public class ProjectController {
 	
 	private InteractionsController interactionsController;
 	
+	private ActionList actionList;
 	
 	public ProjectController(ProjectModel model, ProjectView view) {
 		this.model = model;
@@ -65,6 +67,8 @@ public class ProjectController {
 		InteractionsView intView = new InteractionsView(view, intModel);
 		view.setInteractionsView(intView);
 		interactionsController = new InteractionsController(this, intModel, intView);
+		
+		actionList = new ActionList();
 	}
 	
 	public ProjectView getView() {
@@ -79,6 +83,214 @@ public class ProjectController {
 		return interactionsController;
 	}
 	
+	// undo the last action depending on the mode
+	public void undo() {
+		switch(currentMode) {
+		case INTERACTIONS_MODE: interactionsController.undo(); break;
+		case ANNOTATIONS_MODE: break;
+		default: 
+			Action action = actionList.undo();
+			SketchController sketch = (SketchController) action.getFirst();
+			
+			System.out.println("Undo -> " + action.getMode());
+			if(action.getMode() == ActionList.CREATE) {
+				view.remove(sketch.getView());
+				
+				model.removeSketch(sketch);
+			} else {
+				view.add(sketch.getView());
+				
+				model.addSketch(sketch);
+			}
+			view.update();
+		}
+	}
+	
+	public void redo() {
+		switch(currentMode) {
+		case INTERACTIONS_MODE: interactionsController.redo(); break;
+		case ANNOTATIONS_MODE: break;
+		default:
+			Action action = actionList.redo();
+			SketchController sketch = (SketchController) action.getFirst();
+			
+			if(action.getMode() == ActionList.CREATE) {
+				view.add(sketch.getView());
+				view.update();
+				
+				model.addSketch(sketch);
+			} else {
+				view.remove(sketch.getView());
+				
+				model.removeSketch(sketch);
+			}	
+		}
+	}
+	
+	
+	// change current mode for this project
+	public void changeMode(int mode) {
+		currentMode = mode;
+		
+		if(currentMode == INTERACTIONS_MODE) {
+			showWidgetsBounds();
+		} else {
+			hideWidgetsBounds();
+		}
+		
+		if(currentMode == INTERACTIONS_MODE || currentMode == ANNOTATIONS_MODE) {
+			suspendMachines();
+		} else {
+			resumeMachines();
+		}
+		
+		view.changeMode(currentMode);
+	}
+	
+	// returns project's sketches
+	public ArrayList<SketchController> getSketches() {
+		return model.getSketches();
+	}
+	
+	// check if name is already used by a sketch
+	public boolean isValidName(String name) {
+		ArrayList<SketchController> sketches = model.getSketches();
+
+		int index = 0;
+		int size = sketches.size();
+		while(index < size && !sketches.get(index).getName().equals(name)) { index++; }
+		
+		return index >= size;
+	}
+	
+	// create a new Sketch with basic attributes
+	public SketchController createSketch(Point tlc) {
+		String name = "Sketch" + ++sketchesNb;
+		while(!isValidName(name)) { name = "-"+name; }
+		
+		SketchModel sketchModel = new SketchModel(name, tlc, new Dimension(1, 1));
+		SketchView sketchView = new SketchView(sketchModel);
+		SketchController sketchController = new SketchController(this, sketchModel, sketchView); 
+		
+		model.addSketch(sketchController);
+		view.update();
+		
+		actionList.addAction(sketchController, null, ActionList.CREATE);
+		
+		return sketchController;
+	}
+	
+	// duplicate from an existing sketch
+	public SketchController duplicateSketch(SketchModel sketchModel) {
+		SketchModel cloneModel = new SketchModel(sketchModel);
+		SketchView cloneView = new SketchView(cloneModel);
+		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
+		
+		// change the name of the new sketch
+		String newName = "-"+cloneModel.getName();
+		while(!isValidName(newName)) {
+			newName = "-" + newName;
+		}
+		cloneModel.changeName(newName);
+		
+		// need to associate new controller to all sketch's widgets
+		cloneController.linkWidgets();
+		
+		cloneModel.moveBy(40, 40);
+		cloneView.update();
+		
+		model.addSketch(cloneController);
+		view.update();
+		
+		actionList.addAction(cloneController, null, ActionList.CREATE);
+		
+		return cloneController;
+	}
+	
+	// put the sketch on top of the others
+	public void putOnTop(SketchController sketch) {
+		view.setComponentZOrder(sketch.getView(), 0);
+		view.repaint();
+	}
+	
+	
+	// get sketch containing the given point
+	public SketchController getSketchAt(Point2D p) {
+		SketchController sketch= null;
+		
+		ArrayList<SketchController> sketches = model.getSketches();
+		
+		// we need to get the sketch above all
+		// +1 because of interactions view
+		int minimalOrder = sketches.size() + 1;
+		
+		for(int index = 0; index < sketches.size(); index++) {
+			SketchController tmp = sketches.get(index); 
+			SketchView tmpView = tmp.getView();
+			
+			int sketchZOrder = view.getComponentZOrder(tmpView);
+			
+			// need to change coordinates (intrinsec sketch coordinates)
+			Point2D location = tmpView.getLocation();
+			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))
+			&& minimalOrder > sketchZOrder) {
+				sketch = tmp;
+				minimalOrder = sketchZOrder;
+			}
+		}
+		return sketch;
+	}
+	
+	// returns widget that contains p point 
+	public WidgetController getWidgetAt(Point2D p) {
+		WidgetController widget;
+		
+		SketchController sketch = getSketchAt(p);
+		
+		if(sketch == null) { return null; }
+		else {
+			return sketch.getWidgetAt(p);
+		}
+	}
+	
+	
+	public void removeWidget(WidgetController widget) {
+		interactionsController.removeInteraction(widget);
+	}
+	 
+	public void showWidgetsBounds() {
+		for(SketchController sketch: model.getSketches()) {
+			sketch.showWidgetsBounds();
+		}
+	}
+	
+	public void hideWidgetsBounds() {
+		for(SketchController sketch: model.getSketches()) {
+			sketch.hideWidgetsBounds();
+		}
+	}
+	
+	// suspend all state machines except annotations and interactions ones
+	public void suspendMachines() {
+		creationMachine.suspend();
+		suppressionMachine.suspend();
+		
+		for(SketchController sketch: model.getSketches()) {
+			sketch.suspendMachines();
+		}
+	}
+	
+	// resume all state machines 
+	public void resumeMachines() {
+		creationMachine.resume();
+		suppressionMachine.resume();
+		
+		for(SketchController sketch: model.getSketches()) {
+			sketch.resumeMachines();
+		}
+	}
+	
+	/* STATMACHINES */
 	public CStateMachine attachCreationSM() {
 		return new CStateMachine(view) {
 			
@@ -184,6 +396,8 @@ public class ProjectController {
 					public void action() {
 						// delete the selected sketch
 						if(caught != null && actionGhost.getOutlinePaint() == ProjectView.SUPPRESSION_ACTION_COLOR) {
+							actionList.addAction(caught, null, ActionList.DELETE);
+							
 							model.removeSketch(caught);
 							view.remove(caught.getView());
 						}
@@ -197,271 +411,4 @@ public class ProjectController {
 		};
 	}
 	
-	// change current mode for this project
-	public void changeMode(int mode) {
-		currentMode = mode;
-		
-		if(currentMode == INTERACTIONS_MODE) {
-			showWidgetsBounds();
-		} else {
-			hideWidgetsBounds();
-		}
-		
-		if(currentMode == INTERACTIONS_MODE || currentMode == ANNOTATIONS_MODE) {
-			suspendMachines();
-		} else {
-			resumeMachines();
-		}
-		
-		view.changeMode(currentMode);
-	}
-	
-	// returns project's sketches
-	public ArrayList<SketchController> getSketches() {
-		return model.getSketches();
-	}
-	
-	// check if name is already used by a sketch
-	public boolean isValidName(String name) {
-		ArrayList<SketchController> sketches = model.getSketches();
-
-		int index = 0;
-		int size = sketches.size();
-		while(index < size && !sketches.get(index).getName().equals(name)) { index++; }
-		
-		return index >= size;
-	}
-	
-	// create a new Sketch with basic attributes
-	public SketchController createSketch(Point tlc) {
-		String name = "Sketch" + ++sketchesNb;
-		while(!isValidName(name)) { name = "-"+name; }
-		
-		SketchModel sketchModel = new SketchModel(name, tlc, new Dimension(1, 1));
-		SketchView sketchView = new SketchView(sketchModel);
-		SketchController sketchController = new SketchController(this, sketchModel, sketchView); 
-		
-		model.addSketch(sketchController);
-		view.update();
-		
-		return sketchController;
-	}
-	
-	// duplicate from an existing sketch
-	public SketchController duplicateSketch(SketchModel sketchModel) {
-		SketchModel cloneModel = new SketchModel(sketchModel);
-		SketchView cloneView = new SketchView(cloneModel);
-		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
-		
-		// change the name of the new sketch
-		String newName = "-"+cloneModel.getName();
-		while(!isValidName(newName)) {
-			newName = "-" + newName;
-		}
-		cloneModel.changeName(newName);
-		
-		// need to associate new controller to all sketch's widgets
-		cloneController.linkWidgets();
-		
-		cloneModel.moveBy(40, 40);
-		cloneView.update();
-		
-		model.addSketch(cloneController);
-		view.update();
-		
-		return cloneController;
-	}
-	
-	// put the sketch on top of the others
-	public void putOnTop(SketchController sketch) {
-		view.setComponentZOrder(sketch.getView(), 0);
-		view.repaint();
-	}
-	
-	
-	// get sketch containing the given point
-	public SketchController getSketchAt(Point2D p) {
-		SketchController sketch= null;
-		
-		ArrayList<SketchController> sketches = model.getSketches();
-		
-		// we need to get the sketch above all
-		// +1 because of interactions view
-		int minimalOrder = sketches.size() + 1;
-		
-		for(int index = 0; index < sketches.size(); index++) {
-			SketchController tmp = sketches.get(index); 
-			SketchView tmpView = tmp.getView();
-			
-			int sketchZOrder = view.getComponentZOrder(tmpView);
-			
-			// need to change coordinates (intrinsec sketch coordinates)
-			Point2D location = tmpView.getLocation();
-			if(tmpView.contains((int) (p.getX() - location.getX()), (int) (p.getY() - location.getY()))
-			&& minimalOrder > sketchZOrder) {
-				sketch = tmp;
-				minimalOrder = sketchZOrder;
-			}
-		}
-		return sketch;
-	}
-	
-	// returns widget that contains p point 
-	public WidgetController getWidgetAt(Point2D p) {
-		WidgetController widget;
-		
-		SketchController sketch = getSketchAt(p);
-		
-		if(sketch == null) { return null; }
-		else {
-			return sketch.getWidgetAt(p);
-		}
-	}
-	
-	
-	public void removeWidget(WidgetController widget) {
-		interactionsController.removeInteraction(widget);
-	}
-	 
-	public void showWidgetsBounds() {
-		for(SketchController sketch: model.getSketches()) {
-			sketch.showWidgetsBounds();
-		}
-	}
-	
-	public void hideWidgetsBounds() {
-		for(SketchController sketch: model.getSketches()) {
-			sketch.hideWidgetsBounds();
-		}
-	}
-	
-	// suspend all state machines except annotations and interactions ones
-	public void suspendMachines() {
-		creationMachine.suspend();
-		suppressionMachine.suspend();
-		
-		for(SketchController sketch: model.getSketches()) {
-			sketch.suspendMachines();
-		}
-	}
-	
-	// resume all state machines 
-	public void resumeMachines() {
-		creationMachine.resume();
-		suppressionMachine.resume();
-		
-		for(SketchController sketch: model.getSketches()) {
-			sketch.resumeMachines();
-		}
-	}
-	
-	
-	
-	
-	
-	
-	// draw lines on canvas
-	private class DrawSM extends CStateMachine {
-	 	Canvas view;
-		CPolyLine annotation;
-		
-		
-		public DrawSM(Canvas view) {
-			super(view);
-			this.view = view;
-		}
-		
-		State wait = new State() {
-			Transition press = new Press(BUTTON1, ">> drawing") {
-				public void action() {
-					annotation = view.newPolyLine(getPoint());
-					annotation.setFilled(false);
-					annotation.setStroke(new BasicStroke(2));
-				}
-			};
-		};
-		
-		State drawing = new State() {
-			Transition drag = new Drag() {
-				public void action() {
-					annotation.lineTo(getPoint());
-				}
-			};
-			
-			Transition release = new Release(">> wait") {
-				public void action() {
-					annotation.lineTo(getPoint());
-				}
-			};
-		};
-	}
-	
-	
-	// delete shapes on canvas by gestures use
-	private class DeleteSM extends CStateMachine {
-		// classfifier and gesture which will help classify user's input
-		Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/delete.cl");
-		Gesture gesture = null;
-		
-		CPolyLine ghost = null;
-		
-		CShape caught = null;
-
-		Canvas view;
-		
-		public DeleteSM(Canvas view) {
-			super(view);
-			this.view = view;
-		}
-		
-		
-		State init = new State() {
-			Transition press = new Press(BUTTON3, ">> erasing") {
-				public void action() {
-					Point2D mouse = getPoint();
-					
-					gesture = new Gesture();
-					gesture.addPoint(mouse.getX(), mouse.getY());
-					
-					ghost = view.newPolyLine(mouse);
-					ghost.setFilled(false);
-					ghost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
-				}
-			};
-		};
-		
-		State erasing = new State() {
-			Transition drawing = new Drag() {
-				public void action() {
-					Point2D mouse = getPoint();
-					
-					gesture.addPoint(mouse.getX(), mouse.getY());
-					
-					ghost.lineTo(mouse);
-					
-					// catch the shape below the gesture
-					if(caught == null) {
-						view.removeShape(ghost);
-						CShape tmp = view.contains(mouse);
-						if(!(tmp instanceof CRectangle)) {
-							caught = tmp;
-						}
-						view.addShape(ghost);
-					}
-				}
-			};
-			
-			Transition release = new Release(BUTTON3, ">> init") {
-				public void action() {
-					view.removeShape(ghost);
-					
-					if(classifier.classify(gesture) != null) {
-						view.removeShape(caught);
-						
-						caught = null;
-					}
-				}
-			};
-		};
-	}
 }
