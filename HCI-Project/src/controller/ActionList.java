@@ -1,6 +1,6 @@
 package controller;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 // to perform undo/redo action
 public class ActionList {
@@ -8,25 +8,24 @@ public class ActionList {
 	public static final int CREATE = 0;
 	public static final int DELETE = 1;
 	
-	LinkedList<Action> list;
+	ArrayList<Action> list;
 	
 	int actionIndex;
 	
 	public ActionList() {
 		actionIndex = 0;
-		list = new LinkedList<Action>();
+		list = new ArrayList<Action>();
 		list.add(null);
 	}
 	
+	// remove all actions beyond action index
 	public void addAction(Object first, Object second, int mode) {
-		list.add(++actionIndex, new Action(first, second, mode));
-		
-		int tmpIndex = actionIndex+1;
-		while(tmpIndex < list.size()) {
-			list.removeLast();
-			tmpIndex++;
+		int size = list.size();
+		for(int index = ++actionIndex; index < size; index++) {
+			list.remove(actionIndex);
 		}
-		System.out.println(actionIndex);
+		
+		list.add(new Action(first, second, mode));
 	}
 	
 	// set new index and return the last action made

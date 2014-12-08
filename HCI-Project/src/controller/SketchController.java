@@ -187,6 +187,43 @@ public class SketchController {
 		}
 	}
 	
+	/* UNDO/REDO methods */
+	
+	public void addShape(CPolyLine line) {
+		model.addShape(line);
+		view.addShape(line);
+		view.update();
+	}
+	
+	public void removeShape(CPolyLine line) {
+		model.removeShape(line);
+		view.removeShape(line);
+		view.update();
+	}
+	
+	// add a widget. Called by the project controller (undo/redo)
+	public void addWidget(WidgetController widget) {
+		model.addWidget(widget);
+		model.addShape(widget.getGhost());
+		
+		view.addShape(widget.getGhost());
+		view.addShape(widget.getView());
+		
+		shapeToWidget.put(widget.getGhost(), widget);
+	}
+	
+	// remove a widget. Called by project controller (undo/redo)
+	public void removeWidget(WidgetController widget) {
+		model.removeWidget(widget);
+		model.removeShape(widget.getGhost());
+		
+		view.removeShape(widget.getGhost());
+		view.removeShape(widget.getView());
+		
+		shapeToWidget.remove(widget.getGhost());
+	}
+	
+	/* END of UNDO/REDO methods */
 	
 	// creates a widget from a rectangle
 	public WidgetController createWidget(CPolyLine ghost, int type) {
@@ -196,7 +233,11 @@ public class SketchController {
 											bounds.getWidth(), bounds.getHeight());
 		WidgetView view = new WidgetView(model);
 		
-		return new WidgetController(this, model, view, ghost);
+		WidgetController controller = new WidgetController(this, model, view, ghost);
+		
+		project.addAction(this, controller, ActionList.CREATE);
+		
+		return controller;
 	}
 	
 	// link copied widgets to the new sketch and update shapeToWidget
@@ -357,6 +398,9 @@ public class SketchController {
 							}
 							
 							shapeToWidget.put(line, widget);
+						} else {
+							// record line creation
+							project.addAction(SketchController.this, line, ActionList.CREATE);
 						}
 					}
 				};
@@ -498,6 +542,10 @@ public class SketchController {
 					shapeToWidget.remove(caught);
 					popUpMachine.resume();
 					popUpMachine.reset();
+					
+					project.addAction(SketchController.this, widget, ActionList.DELETE);
+				} else {
+					project.addAction(SketchController.this, caught, ActionList.DELETE);
 				}
 			}
 		};

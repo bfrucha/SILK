@@ -3,6 +3,7 @@ package controller;
 import java.awt.BasicStroke;
 import java.util.ArrayList;
 
+import controller.ActionList.Action;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
 import fr.lri.swingstates.canvas.CShape;
@@ -22,11 +23,15 @@ public class AnnotationsController {
 	private CStateMachine drawMachine;
 	private CStateMachine deleteMachine;
 	
+	private ActionList actionList;
+	
 	public AnnotationsController(AnnotationsView view) {
 		this.view = view;
 		
 		drawMachine = attachDrawSM();
 		deleteMachine = attachDeleteSM();
+		
+		actionList = new ActionList();
 	}
 	
 	public CStateMachine attachDrawSM() {
@@ -53,6 +58,8 @@ public class AnnotationsController {
 				Transition release = new Release(">> wait") {
 					public void action() {
 						annotation.lineTo(getPoint());
+						
+						actionList.addAction(annotation, null, ActionList.CREATE);
 					}
 				};
 			};
@@ -100,11 +107,37 @@ public class AnnotationsController {
 						
 						for(CShape caught: caughtShapes) {
 							view.removeShape(caught);
+							
+							actionList.addAction(caught, null, ActionList.DELETE);
 						}
 						view.repaint();
 					}
 				};
 			};
 		};
+	}
+	
+	public void undo() {
+		Action action = actionList.undo();
+		
+		if(action != null) {
+			if(action.getMode() == ActionList.CREATE) {
+				view.removeShape((CPolyLine) action.getFirst());
+			} else {
+				view.addShape((CPolyLine) action.getFirst());
+			}
+		}
+	}
+	
+	public void redo() {
+		Action action = actionList.redo();
+		
+		if(action != null) {
+			if(action.getMode() == ActionList.CREATE) {
+				view.addShape((CPolyLine) action.getFirst());
+			} else {
+				view.removeShape((CPolyLine) action.getFirst());
+			}
+		}
 	}
 }

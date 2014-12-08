@@ -40,24 +40,6 @@ public class InteractionsController {
 		deleteMachine = attachDeleteSM();
 		
 		actionList = new ActionList();
-		
-		new CStateMachine() {
-			State init = new State() {
-				Transition keyInput = new KeyType('u') {
-					public void action() {
-						System.out.println("Undo !");
-						undo();
-					}
-				};
-				
-				Transition keyInput2 = new KeyType('r') {
-					public void action() {
-						System.out.println("Redo !");
-						redo();
-					}
-				};
-			};
-		}.attachTo(view);
 	}
 
 	// get all widget -> sketch interactions from the model
@@ -67,8 +49,6 @@ public class InteractionsController {
 	
 	// remove interactions for a given widget
 	public void removeInteraction(WidgetController widget) {
-		actionList.addAction(widget, model.getInteractions().get(widget), ActionList.DELETE);
-				
 		model.removeInteraction(widget);
 	}
 	
@@ -160,27 +140,34 @@ public class InteractionsController {
 	}
 	
 	public void undo() {
-		Action link = actionList.undo();
+		Action action = actionList.undo();
 		
-		if(link != null) { restoreState(link, true); }
+		if(action != null) {
+			// undo creation => delete
+			if(action.getMode() == ActionList.CREATE) {
+				model.removeInteraction((WidgetController) action.getFirst()); 
+			}
+			else { 
+				if(action.getSecond() instanceof WidgetController) { model.addInteraction((WidgetController) action.getFirst(), (WidgetController) action.getSecond()); }
+				else { model.addInteraction((WidgetController) action.getFirst(), (SketchController) action.getSecond());} 
+			}
+		}
 		view.update();
 	}
 	
 	public void redo() {
-		Action link = actionList.redo();
+		Action action = actionList.redo();
 		
-		if(link != null) { restoreState(link, false); }
+		if(action != null) { 
+			if(action.getMode() == ActionList.CREATE) {
+				if(action.getSecond() instanceof WidgetController) { model.addInteraction((WidgetController) action.getFirst(), (WidgetController) action.getSecond()); }
+				else { model.addInteraction((WidgetController) action.getFirst(), (SketchController) action.getSecond());} 
+			}
+			// interaction already exists => delete it
+			else { 
+				model.removeInteraction((WidgetController) action.getFirst());
+			}
+		}
 		view.update();
-	}
-	
-	private void restoreState(Action link, boolean undo) {
-		if(link.getMode() == ActionList.CREATE && !undo) {
-			if(link.getSecond() instanceof WidgetController) { model.addInteraction((WidgetController) link.getFirst(), (WidgetController) link.getSecond()); }
-			else { model.addInteraction((WidgetController) link.getFirst(), (SketchController) link.getSecond());} 
-		}
-		// interaction already exists => delete it
-		else { 
-			model.removeInteraction((WidgetController) link.getFirst());
-		}
 	}
 }

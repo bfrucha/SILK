@@ -83,16 +83,27 @@ public class ProjectController {
 		return interactionsController;
 	}
 	
+	// add a new action to the list
+	public void addAction(Object first, Object second, int mode) {
+		actionList.addAction(first, second, mode);
+	}
+	
 	// undo the last action depending on the mode
 	public void undo() {
 		switch(currentMode) {
 		case INTERACTIONS_MODE: interactionsController.undo(); break;
-		case ANNOTATIONS_MODE: break;
+		case ANNOTATIONS_MODE: annotationsController.undo(); break;
 		default: 
 			Action action = actionList.undo();
-			SketchController sketch = (SketchController) action.getFirst();
-			
-			System.out.println("Undo -> " + action.getMode());
+			if(action != null) { undo(action); }
+		}
+	}
+	
+	private void undo(Action action) {
+		SketchController sketch = (SketchController) action.getFirst();
+		
+		// sketch to create/remove
+		if(action.getSecond() == null) {
 			if(action.getMode() == ActionList.CREATE) {
 				view.remove(sketch.getView());
 				
@@ -101,32 +112,74 @@ public class ProjectController {
 				view.add(sketch.getView());
 				
 				model.addSketch(sketch);
+				
+				putOnTop(sketch);
 			}
 			view.update();
+		} else {
+			Object second = action.getSecond();
+			if(second instanceof CPolyLine) {
+				if(action.getMode() == ActionList.CREATE) { System.out.println("undo line");sketch.removeShape((CPolyLine) second); }
+				else { sketch.addShape((CPolyLine) second); }
+			}
+			else {
+				System.out.println("Widget");
+				WidgetController widget = (WidgetController) second;
+				
+				if(action.getMode() == ActionList.CREATE) { 
+					sketch.removeWidget(widget);
+					interactionsController.removeInteraction(widget);
+				}
+				else { System.out.println("add widget");sketch.addWidget(widget); }
+			}
 		}
 	}
 	
 	public void redo() {
 		switch(currentMode) {
 		case INTERACTIONS_MODE: interactionsController.redo(); break;
-		case ANNOTATIONS_MODE: break;
+		case ANNOTATIONS_MODE: annotationsController.redo(); break;
 		default:
 			Action action = actionList.redo();
-			SketchController sketch = (SketchController) action.getFirst();
-			
+			if(action != null) { redo(action); }
+		}
+	}
+	
+	private void redo(Action action) {
+		SketchController sketch = (SketchController) action.getFirst();
+		
+		if(action.getSecond() == null) {
 			if(action.getMode() == ActionList.CREATE) {
 				view.add(sketch.getView());
-				view.update();
 				
 				model.addSketch(sketch);
+				
+				putOnTop(sketch);
 			} else {
 				view.remove(sketch.getView());
 				
 				model.removeSketch(sketch);
-			}	
+			}
+		} else {
+			Object second = action.getSecond();
+			
+			if(second instanceof CPolyLine) {
+				if(action.getMode() == ActionList.CREATE) { sketch.addShape((CPolyLine) second); }
+				else { sketch.removeShape((CPolyLine) second); }
+			}
+			else {
+				WidgetController widget = (WidgetController) second;
+				
+				if(action.getMode() == ActionList.CREATE) { sketch.addWidget(widget); }
+				else { 
+					sketch.removeWidget(widget);
+					interactionsController.removeInteraction(widget);
+				}
+			}
 		}
+		
+		view.update();
 	}
-	
 	
 	// change current mode for this project
 	public void changeMode(int mode) {
