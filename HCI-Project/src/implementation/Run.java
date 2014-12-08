@@ -14,7 +14,7 @@ public class Run
 		if (!folder.exists())
 			folder.mkdirs();
 		
-		Implement i = new Implement(p);//, m);
+		Implement i = new Implement(p, m);
 		i.createClasses(folder);
 		
 		Runtime rt = Runtime.getRuntime();

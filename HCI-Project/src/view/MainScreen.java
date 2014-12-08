@@ -88,7 +88,7 @@ public class MainScreen extends JFrame {
 		build.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Implement i = new Implement(pc);
+				Implement i = new Implement(pc, MainScreen.this);
 				//"/Users/lsaublet/Desktop/ProjectSilkOutput/"
 				JFileChooser f = new JFileChooser(new java.io.File("."));
 				f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
