@@ -21,9 +21,7 @@ public class Run
 		
 		//Compilation
 		try {
-			System.out.println("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + p.getSketches().get(0).getName() + ".java");
 			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + p.getSketches().get(0).getName() + ".java").waitFor();
-			System.out.println("java -cp " + folder.getCanonicalPath() + "/" + " " + p.getSketches().get(0).getName());
 			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + p.getSketches().get(0).getName());
 			pr.waitFor();
 		}
@@ -38,8 +36,6 @@ public class Run
 		
 		for (File f : folder.listFiles())
 			f.delete();
-		
-		System.out.println("END");
 	}
 
 }
