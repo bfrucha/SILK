@@ -105,7 +105,7 @@ public class MainScreen extends JFrame {
 		bar.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Run r = new Run(pc);
+				Run r = new Run(pc, MainScreen.this);
 			}
 		});
 	

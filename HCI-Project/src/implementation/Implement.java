@@ -83,7 +83,7 @@ public class Implement
 		
 		//Ajout des imports
 		toWrite += "import java.awt.Dimension;\nimport java.awt.Rectangle;\nimport java.awt.event.ActionEvent;\nimport java.awt.event.ActionListener;\n";
-		toWrite += "import javax.swing.JButton;\nimport javax.swing.JFrame;\n";
+		toWrite += "import javax.swing.JButton;\nimport javax.swing.JFrame;\n\n";
 		
 		//Declaration de la classe
 		toWrite += "public class "+ sketchName +" extends JFrame implements ActionListener{\n";
