@@ -42,12 +42,15 @@ public class ProjectController {
 	
 	private CStateMachine creationMachine;
 	private CStateMachine suppressionMachine;
+	private CStateMachine homeMachine;
 	
 	private AnnotationsController annotationsController;
 	
 	private InteractionsController interactionsController;
 	
 	private ActionList actionList;
+	
+	private SketchController homeSketch;
 	
 	public ProjectController(ProjectModel model, ProjectView view) {
 		this.model = model;
@@ -58,6 +61,10 @@ public class ProjectController {
 		
 		// enable suppression of sketches
 		suppressionMachine = attachSuppressionSM();
+		
+		// enable change of home sketch
+		homeMachine = attachHomeSM();
+		
 		
 		// enable annotations writing on top of the project
 		annotationsController = new AnnotationsController(view.getAnnotationsView());
@@ -230,6 +237,9 @@ public class ProjectController {
 		
 		actionList.addAction(sketchController, null, ActionList.CREATE);
 		
+		if(sketchesNb == 1) { homeSketch = sketchController; }
+		else { sketchController.setHome(false); }
+		
 		return sketchController;
 	}
 	
@@ -292,6 +302,11 @@ public class ProjectController {
 			}
 		}
 		return sketch;
+	}
+	
+	// returns the main sketch of the project
+	public SketchController getHomeSketch() {
+		return homeSketch;
 	}
 	
 	// returns widget that contains p point 
@@ -431,7 +446,7 @@ public class ProjectController {
 						if(caught == null) {
 							caught = tmp;
 							
-							if(caught != null && !caught.isSelected(mouse)) {
+							if(caught != null && !caught.isSelected(mouse, true)) {
 								caught = null;
 							}
 						}
@@ -464,4 +479,81 @@ public class ProjectController {
 		};
 	}
 	
+	
+	public CStateMachine attachHomeSM() {
+		return new CStateMachine(view) {
+			
+			Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/validate.cl");
+			Gesture gesture;
+			
+			Canvas calque;
+			CPolyLine actionGhost;
+			SketchController caught;
+			
+			State noAction = new State() {
+				Transition begin = new Press(BUTTON3, ">> selection") {
+					public void action() {
+						calque = view.getCalque();
+						
+						Point2D mouse = getPoint();
+						
+						actionGhost = calque.newPolyLine(mouse);
+						actionGhost.setFilled(false);
+						actionGhost.setOutlinePaint(ProjectView.ACTION_COLOR);
+						actionGhost.setStroke(new BasicStroke(2));
+						
+						gesture = new Gesture();
+						gesture.addPoint(mouse.getX(), mouse.getY());
+						
+						view.add(calque);
+						view.setComponentZOrder(calque, 0);
+					}
+				};
+			};
+			
+			State selection = new State() {
+				Transition over = new Drag() {
+					public void action() {
+						Point2D mouse = getPoint();
+						
+						actionGhost.lineTo(mouse);
+						gesture.addPoint(mouse.getX(), mouse.getY());
+						
+						SketchController tmp = getSketchAt(mouse);
+						
+						// if the line crosses a sketch's view, we catch it
+						if(caught == null) {
+							caught = tmp;
+							
+							if(caught != null && !caught.isSelected(mouse, false)) {
+								caught = null;
+							}
+						}
+						
+						if(caught != null && classifier.classify(gesture) != null) {
+							actionGhost.setOutlinePaint(ProjectView.VALIDATE_ACTION_COLOR);
+						} else {
+							actionGhost.setOutlinePaint(ProjectView.ACTION_COLOR);
+						}
+					}
+				};
+				
+				Transition validate = new Release(BUTTON3, ">> noAction") {
+					public void action() {
+						// delete the selected sketch
+						if(caught != null && classifier.classify(gesture) != null) {
+							homeSketch.setHome(false);
+							homeSketch = caught;
+							homeSketch.setHome(true);
+						}
+						
+						caught = null;
+						calque.removeShape(actionGhost);
+						view.remove(calque);
+						view.repaint();
+					}
+				};
+			};
+		};
+	}
 }

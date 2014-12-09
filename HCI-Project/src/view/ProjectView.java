@@ -19,6 +19,7 @@ public class ProjectView extends Canvas {
 	
 	public static final Color ACTION_COLOR = Color.blue;
 	public static final Color SUPPRESSION_ACTION_COLOR = Color.red;
+	public static final Color VALIDATE_ACTION_COLOR = new Color(25, 125, 25);
 	
 	private ProjectModel model;
 	

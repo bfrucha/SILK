@@ -115,6 +115,11 @@ public class SketchController {
 		return view;
 	}
 	
+	// makes this sketch the main one or not
+	public void setHome(boolean isHome) {
+		view.setHome(isHome);
+	}
+	
 	public LinkedList<WidgetController> getWidgets() {
 		return model.getWidgets();
 	}
@@ -164,12 +169,14 @@ public class SketchController {
 	
 
 	// tell whether this sketch is selected by an user's action
-	public boolean isSelected(Point2D point) {
+	// check if the point is on the title or the title bar
+	public boolean isSelected(Point2D point, boolean onTitle) {
 		Point location = view.getLocation();
 		
 		point.setLocation(point.getX() - location.getX(), point.getY() - location.getY());
 		
-		return view.onTitle(point);
+		if(onTitle) { return view.onTitle(point); }
+		else        { return view.getTitleBar().contains(point) != null; }
 	}
 	
 	// pause all machines this sketch is attached to

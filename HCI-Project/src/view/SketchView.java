@@ -1,6 +1,5 @@
 package view;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -10,7 +9,6 @@ import java.awt.geom.Point2D;
 import javax.swing.border.LineBorder;
 
 import model.SketchModel;
-import model.WidgetModel;
 import fr.lri.swingstates.canvas.CImage;
 import fr.lri.swingstates.canvas.CPolyLine;
 import fr.lri.swingstates.canvas.CRectangle;
@@ -107,6 +105,10 @@ public class SketchView extends Canvas {
 		}
 	}*/
 	
+	public void setHome(boolean isHome) {
+		titleBar.setHome(isHome);
+	}
+	
 	public void update() {
 		Dimension size = model.getSize();
 		
@@ -140,6 +142,8 @@ public class SketchView extends Canvas {
 		private CText title;
 		private CImage copyIcon;
 		
+		private CImage home;
+		
 		public TitleBar() {
 			super();
 			setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -153,6 +157,10 @@ public class SketchView extends Canvas {
 			copyIcon = newImage(0, 0, "images/copy-2.png");
 			copyIcon.setOutlined(false);
 			copyIcon.scaleBy(0.9);
+			
+			home = newImage(0, 0, "images/home.png");
+			home.setOutlined(false);
+			home.scaleBy(0.9);
 			
 			title = newText(0, 0, model.getName());
 		}
@@ -172,12 +180,17 @@ public class SketchView extends Canvas {
 			return copyIcon;
 		}
 		
+		public void setHome(boolean isHome) {
+			home.setDrawable(isHome);
+		}
+		
 		// update relative to the new width of the sketch
 		public void update(int width) {
 			setSize(width, TB_HEIGHT);
 			bg.scaleTo(2, 1);
 			bg.scaleBy(width, 1);
 			copyIcon.translateTo(width - 20, 17);
+			home.translateTo(width/2, 17);
 			title.setText(model.getName());
 		}
 	}
