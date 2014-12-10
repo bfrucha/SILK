@@ -1,5 +1,6 @@
 package implementation;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
@@ -8,6 +9,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import view.MainScreen;
 import view.SketchView;
@@ -89,16 +94,21 @@ public class Implement
 		
 		//Ajout des imports
 		toWrite += "import java.awt.Dimension;\nimport java.awt.Rectangle;\nimport java.awt.event.ActionEvent;\nimport java.awt.event.ActionListener;\n";
-		toWrite += "import javax.swing.JButton;\nimport javax.swing.JFrame;\n\n";
+		toWrite += "import javax.swing.JButton;\nimport javax.swing.JFrame;\nimport javax.swing.JPanel;\nimport javax.swing.JTextField;\nimport java.awt.Color;\nimport javax.swing.BorderFactory;\n\n";
 		
 		//Declaration de la classe
-		toWrite += "public class "+ sketchName +" extends JFrame implements ActionListener{\n";
+		toWrite += "public class "+ sketchName +" extends JFrame implements ActionListener{\n\n";
 		
 		i=1;
 		//Déclaration des boutons
 		for (WidgetController w : widgets)
 		{
-			toWrite += "\tprivate JButton btn"+ i +";\n";
+			if (w.getModel().getType() == 0)
+				toWrite += "\tprivate JButton btn"+ i +";\n";
+			else if (w.getModel().getType() == 1)
+				toWrite += "\tprivate JTextField txt" + i +";\n";
+			else if(w.getModel().getType() == 2)
+				toWrite += "\tprivate JPanel panel" + i + ";\n";
 			i++;
 		}
 		
@@ -110,23 +120,45 @@ public class Implement
 		toWrite += "\t\tsetSize(new Dimension("+(int)s.getSize().getWidth() + ","+ (int)(s.getSize().getHeight() - SketchView.TB_HEIGHT/2) +"));\n";
 		
 		//Determine la position du sketch dans l'interface pour la mapper à l'écran
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //taille de l'écran
+		/*Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize(); //taille de l'écran
 		Dimension mainscreenSize = mainscreen.getSize();
 		int x = (int)((s.getLocation().getX() / mainscreenSize.width) * screenSize.width);
-		int y = (int)((s.getLocation().getY() / mainscreenSize.height) * screenSize.height);
+		int y = (int)((s.getLocation().getY() / mainscreenSize.height) * screenSize.height);*/
+		int x = 300, y = 100;
 		toWrite += "\t\tsetLocation("+ x +", "+ y +");\n\n";
 		
 		i = 1;
 		for (WidgetController w : widgets)
 		{
-			toWrite += "\t\t" + "btn"+i+" = new JButton();\n";
-			if (interactions.getInteractions().get(w) != null)
-				toWrite += "\t\t" + "btn"+i+".setText(\" to " + ((SketchController) interactions.getInteractions().get(w)).getName() + "\");\n";
-			toWrite += "\t\t" + "btn"+i+".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)w.getBounds().getY() + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
-			toWrite += "\t\t" + "btn"+i+".addActionListener(this);\n";
-			toWrite += "\t\t" + "add(btn"+i+");\n\n";
+			if (w.getModel().getType() == 0) // Btn
+			{
+				toWrite += "\t\t" + "btn"+i+" = new JButton();\n";
+				if (interactions.getInteractions().get(w) != null)
+					toWrite += "\t\t" + "btn"+i+".setText(\" to " + ((SketchController) interactions.getInteractions().get(w)).getName() + "\");\n";
+				toWrite += "\t\t" + "btn"+i+".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)(w.getBounds().getY()-SketchView.TB_HEIGHT) + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
+				toWrite += "\t\t" + "btn"+i+".addActionListener(this);\n";
+				toWrite += "\t\t" + "add(btn"+i+");\n\n";
+			}
+			else if (w.getModel().getType() == 1) //TextField
+			{
+				toWrite += "\t\t" + "txt"+i + " = new JTextField();\n";
+				toWrite += "\t\t" + "txt"+i + ".setVisible(true);\n";
+				toWrite += "\t\t" + "txt"+i +".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)(w.getBounds().getY()-SketchView.TB_HEIGHT) + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
+				toWrite += "\t\t" + "add(txt"+i+");\n\n";
+			}
+			else if (w.getModel().getType() == 2) //Panel
+			{
+				toWrite += "\t\t" + "panel"+i + " = new JPanel();\n";
+				toWrite += "\t\t" + "panel"+i +".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)(w.getBounds().getY()-SketchView.TB_HEIGHT) + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
+				toWrite += "\t\t" + "panel"+i +".setBorder(BorderFactory.createLineBorder(Color.black));\n";
+				toWrite += "\t\t" + "panel"+i +".setOpaque(false);\n";
+				toWrite += "\t\t" + "add(panel"+i+");\n\n";
+			}
+			
 			i++;
 		}
+		
+		toWrite += "\n\t\trepaint();\n";
 		
 		toWrite += "\t}\n";
 		//Fin constructeur
@@ -183,15 +215,4 @@ public class Implement
 		
 		return allDiff;
 	}
-	
-	/*private ArrayList<String> getAllDiffSketchs()
-	{
-		ArrayList<String> sketchs = new ArrayList<String>();
-		
-		for (Entry<WidgetController, SketchController> s : interactions.getModel().getInteractions().entrySet())
-			if (!sketchs.contains(s.getValue().getModel().getName()))
-				sketchs.add(s.getValue().getModel().getName());
-		
-		return sketchs;
-	}*/
 }
