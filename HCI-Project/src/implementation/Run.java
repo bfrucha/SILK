@@ -21,8 +21,8 @@ public class Run
 		
 		//Compilation
 		try {
-			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + p.getSketches().get(0).getName() + ".java").waitFor();
-			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + p.getSketches().get(0).getName());
+			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + p.getHomeSketch().getName() + ".java").waitFor();
+			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + p.getHomeSketch().getName());
 			pr.waitFor();
 		}
 		catch (IOException e)
