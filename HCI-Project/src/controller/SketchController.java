@@ -170,13 +170,12 @@ public class SketchController {
 
 	// tell whether this sketch is selected by an user's action
 	// check if the point is on the title or the title bar
-	public boolean isSelected(Point2D point, boolean onTitle) {
+	public boolean isSelected(Point2D point) {
 		Point location = view.getLocation();
 		
 		point.setLocation(point.getX() - location.getX(), point.getY() - location.getY());
 		
-		if(onTitle) { return view.onTitle(point); }
-		else        { return view.getTitleBar().contains(point) != null; }
+		return view.getTitleBar().contains(point) != null;
 	}
 	
 	// pause all machines this sketch is attached to

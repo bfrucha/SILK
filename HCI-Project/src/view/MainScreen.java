@@ -31,7 +31,10 @@ import controller.ProjectController;
 public class MainScreen extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-
+	
+	public static Button undo;
+	public static Button redo;
+	
 	public MainScreen(int width, int height) {
 		super();
 
@@ -124,16 +127,10 @@ public class MainScreen extends JFrame {
 		JPanel buttons = new JPanel();
 		buttons.setLayout(new GridLayout(1, 2, 5, 0));
 		
-		JButton undo = new JButton();
-		undo.setBackground(new Color(238, 238, 238));
-		undo.setIcon(new ImageIcon("images/undo.png"));
-		undo.setBorder(null);
+		undo = new Button("images/undo_active.png", "images/undo_inactive.png");
 		buttons.add(undo);
 		
-		JButton redo = new JButton();
-		redo.setBackground(new Color(238, 238, 238));
-		redo.setIcon(new ImageIcon("images/redo.png"));
-		redo.setBorder(null);
+		redo = new Button("images/redo_active.png", "images/redo_inactive.png");
 		buttons.add(redo);
 		
 		menuBar.add(buttons, BorderLayout.EAST);
@@ -153,5 +150,34 @@ public class MainScreen extends JFrame {
 
 	public static void main(String[] args) {
 		new MainScreen(1000, 1000);
+	}
+	
+	public class Button extends JButton {
+		
+		private ImageIcon activeIcon;
+		private ImageIcon inactiveIcon;
+		
+		public Button(String active, String inactive) {
+			super();
+			
+			activeIcon = new ImageIcon(active);
+			inactiveIcon = new ImageIcon(inactive);
+			
+			setBackground(new Color(238, 238, 238));
+			setIcon(activeIcon);
+			setBorder(null);
+		}
+		
+		public void setActive(boolean active) {
+			if(active) { 
+				setIcon(activeIcon);
+				setEnabled(true);
+			}
+			else { 
+				setIcon(inactiveIcon);
+				setEnabled(false);
+			}
+		}
+		
 	}
 }

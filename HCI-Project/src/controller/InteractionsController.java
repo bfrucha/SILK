@@ -3,6 +3,7 @@ package controller;
 import java.awt.BasicStroke;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
+import java.util.Map;
 
 import controller.ActionList.Action;
 import model.InteractionsModel;
@@ -52,6 +53,18 @@ public class InteractionsController {
 		model.removeInteraction(widget);
 	}
 	
+	// remove all interactions that link the given sketch
+	public void removeInteraction(SketchController sketch) {
+		HashMap<WidgetController, Object> interactions = model.getInteractions();
+		int size = interactions.size();
+		
+		for(Map.Entry<WidgetController, Object> entry: interactions.entrySet()) {
+			if(interactions.get(entry.getKey()).equals(sketch)) {
+				interactions.remove(entry.getKey());
+			}
+		}
+	}
+	
 	public CStateMachine attachDrawSM() {
 		return new CStateMachine(view) {
 		 	CSegment ghost;
@@ -98,7 +111,7 @@ public class InteractionsController {
 							
 							HashMap<WidgetController, Object> interactions = model.getInteractions();
 							// link two widgets
-							if(initialSketch == sketchCaught && widgetCaught != null) {
+							/*if(initialSketch == sketchCaught && widgetCaught != null) {
 								// avoid action duplication
 								Object controller = model.getInteractions().get(initialWidget);
 								if(controller == null || !controller.equals(widgetCaught))
@@ -107,7 +120,8 @@ public class InteractionsController {
 								model.addInteraction(initialWidget, widgetCaught);
 							}
 							// link a widget with a sketch
-							else if(sketchCaught != null && initialWidget.getType() == WidgetModel.BUTTON) {
+							else*/ 
+							if(sketchCaught != null && initialWidget.getType() == WidgetModel.BUTTON) {
 								Object controller = model.getInteractions().get(initialWidget);
 								if(controller == null || !controller.equals(sketchCaught))
 									{ actionList.addAction(initialWidget, sketchCaught, ActionList.CREATE); }

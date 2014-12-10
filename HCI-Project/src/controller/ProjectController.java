@@ -21,6 +21,7 @@ import fr.lri.swingstates.sm.transitions.KeyPress;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
 import view.InteractionsView;
+import view.MainScreen;
 import view.ProjectView;
 import view.SketchView;
 import model.InteractionsModel;
@@ -41,8 +42,7 @@ public class ProjectController {
 	private ProjectView view;
 	
 	private CStateMachine creationMachine;
-	private CStateMachine suppressionMachine;
-	private CStateMachine homeMachine;
+	private CStateMachine gestureMachine;
 	
 	private AnnotationsController annotationsController;
 	
@@ -59,11 +59,8 @@ public class ProjectController {
 		// enable creation of sketches
 		creationMachine = attachCreationSM();
 		
-		// enable suppression of sketches
-		suppressionMachine = attachSuppressionSM();
-		
-		// enable change of home sketch
-		homeMachine = attachHomeSM();
+		// enable suppression and main sketches
+		gestureMachine = attachGestureSM();
 		
 		
 		// enable annotations writing on top of the project
@@ -112,25 +109,23 @@ public class ProjectController {
 		// sketch to create/remove
 		if(action.getSecond() == null) {
 			if(action.getMode() == ActionList.CREATE) {
-				view.remove(sketch.getView());
-				
-				model.removeSketch(sketch);
+				removeSketch(sketch, false);
 			} else {
 				view.add(sketch.getView());
 				
 				model.addSketch(sketch);
 				
 				putOnTop(sketch);
+				if(model.getSketches().size() == 1) { (homeSketch = model.getSketches().get(0)).setHome(true); }
 			}
 			view.update();
 		} else {
 			Object second = action.getSecond();
 			if(second instanceof CPolyLine) {
-				if(action.getMode() == ActionList.CREATE) { System.out.println("undo line");sketch.removeShape((CPolyLine) second); }
+				if(action.getMode() == ActionList.CREATE) { sketch.removeShape((CPolyLine) second); }
 				else { sketch.addShape((CPolyLine) second); }
 			}
 			else {
-				System.out.println("Widget");
 				WidgetController widget = (WidgetController) second;
 				
 				if(action.getMode() == ActionList.CREATE) { 
@@ -162,6 +157,7 @@ public class ProjectController {
 				model.addSketch(sketch);
 				
 				putOnTop(sketch);
+				if(model.getSketches().size() == 1) { (homeSketch = model.getSketches().get(0)).setHome(true); }
 			} else {
 				view.remove(sketch.getView());
 				
@@ -237,7 +233,7 @@ public class ProjectController {
 		
 		actionList.addAction(sketchController, null, ActionList.CREATE);
 		
-		if(sketchesNb == 1) { homeSketch = sketchController; }
+		if(model.getSketches().size() == 1) { homeSketch = sketchController; }
 		else { sketchController.setHome(false); }
 		
 		return sketchController;
@@ -268,6 +264,28 @@ public class ProjectController {
 		actionList.addAction(cloneController, null, ActionList.CREATE);
 		
 		return cloneController;
+	}
+	
+	public void removeSketch(SketchController sketch, boolean addAction) {
+		if(addAction) { actionList.addAction(sketch, null, ActionList.DELETE); }
+		
+		model.removeSketch(sketch);
+		view.remove(sketch.getView());
+		
+		for(WidgetController widget: sketch.getWidgets()) {
+			interactionsController.removeInteraction(widget);
+		}
+		interactionsController.removeInteraction(sketch);
+		
+		if(sketch.equals(homeSketch)) { 
+			homeSketch.setHome(false);
+			
+			if(model.getSketches().size() > 0) {
+				homeSketch = model.getSketches().get(0);
+				homeSketch.setHome(true); 
+			}
+			else { homeSketch = null; }
+		}
 	}
 	
 	// put the sketch on top of the others
@@ -341,7 +359,7 @@ public class ProjectController {
 	// suspend all state machines except annotations and interactions ones
 	public void suspendMachines() {
 		creationMachine.suspend();
-		suppressionMachine.suspend();
+		gestureMachine.suspend();
 		
 		for(SketchController sketch: model.getSketches()) {
 			sketch.suspendMachines();
@@ -351,7 +369,7 @@ public class ProjectController {
 	// resume all state machines 
 	public void resumeMachines() {
 		creationMachine.resume();
-		suppressionMachine.resume();
+		gestureMachine.resume();
 		
 		for(SketchController sketch: model.getSketches()) {
 			sketch.resumeMachines();
@@ -410,80 +428,11 @@ public class ProjectController {
 	
 	// enable suppression of a sketch
 	// draw a line onto a sketch's title to suppress it
-	public CStateMachine attachSuppressionSM() {
+	public CStateMachine attachGestureSM() {
 		return new CStateMachine(view) {
 			
-			Canvas calque;
-			CPolyLine actionGhost;
-			SketchController caught;
-			
-			State noAction = new State() {
-				Transition begin = new Press(BUTTON3, ">> selection") {
-					public void action() {
-						calque = view.getCalque();
-						
-						actionGhost = calque.newPolyLine(getPoint());
-						actionGhost.setFilled(false);
-						actionGhost.setOutlinePaint(ProjectView.ACTION_COLOR);
-						actionGhost.setStroke(new BasicStroke(2));
-						
-						view.add(calque);
-						view.setComponentZOrder(calque, 0);
-					}
-				};
-			};
-			
-			State selection = new State() {
-				Transition over = new Drag() {
-					public void action() {
-						Point2D mouse = getPoint();
-						
-						actionGhost.lineTo(mouse);
-						
-						SketchController tmp = getSketchAt(mouse);
-						
-						// if the line crosses a sketch's view, we catch it
-						if(caught == null) {
-							caught = tmp;
-							
-							if(caught != null && !caught.isSelected(mouse, true)) {
-								caught = null;
-							}
-						}
-						
-						// on a sketch => no suppression
-						if(tmp != null) {
-							actionGhost.setOutlinePaint(ProjectView.ACTION_COLOR);
-						} else if(caught != null) {
-							actionGhost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
-						}
-					}
-				};
-				
-				Transition validate = new Release(BUTTON3, ">> noAction") {
-					public void action() {
-						// delete the selected sketch
-						if(caught != null && actionGhost.getOutlinePaint() == ProjectView.SUPPRESSION_ACTION_COLOR) {
-							actionList.addAction(caught, null, ActionList.DELETE);
-							
-							model.removeSketch(caught);
-							view.remove(caught.getView());
-						}
-						caught = null;
-						calque.removeShape(actionGhost);
-						view.remove(calque);
-						view.repaint();
-					}
-				};
-			};
-		};
-	}
-	
-	
-	public CStateMachine attachHomeSM() {
-		return new CStateMachine(view) {
-			
-			Dollar1Classifier classifier = Dollar1Classifier.newClassifier("classifier/validate.cl");
+			Dollar1Classifier delete = Dollar1Classifier.newClassifier("classifier/delete.cl");
+			Dollar1Classifier circle = Dollar1Classifier.newClassifier("classifier/circle.cl");
 			Gesture gesture;
 			
 			Canvas calque;
@@ -493,9 +442,9 @@ public class ProjectController {
 			State noAction = new State() {
 				Transition begin = new Press(BUTTON3, ">> selection") {
 					public void action() {
-						calque = view.getCalque();
-						
 						Point2D mouse = getPoint();
+						
+						calque = view.getCalque();
 						
 						actionGhost = calque.newPolyLine(mouse);
 						actionGhost.setFilled(false);
@@ -517,6 +466,7 @@ public class ProjectController {
 						Point2D mouse = getPoint();
 						
 						actionGhost.lineTo(mouse);
+						
 						gesture.addPoint(mouse.getX(), mouse.getY());
 						
 						SketchController tmp = getSketchAt(mouse);
@@ -525,26 +475,36 @@ public class ProjectController {
 						if(caught == null) {
 							caught = tmp;
 							
-							if(caught != null && !caught.isSelected(mouse, false)) {
+							if(caught != null && !caught.isSelected(mouse)) {
 								caught = null;
 							}
 						}
 						
-						if(caught != null && classifier.classify(gesture) != null) {
-							actionGhost.setOutlinePaint(ProjectView.VALIDATE_ACTION_COLOR);
-						} else {
+						// on a sketch => no suppression
+						if(tmp != null) {
 							actionGhost.setOutlinePaint(ProjectView.ACTION_COLOR);
-						}
+						} else if(caught != null) {
+							if(delete.classify(gesture) != null) {
+								actionGhost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
+							} else if(circle.classify(gesture) != null) {
+								actionGhost.setOutlinePaint(ProjectView.VALIDATE_ACTION_COLOR);
+							}
+						} 
 					}
 				};
 				
 				Transition validate = new Release(BUTTON3, ">> noAction") {
 					public void action() {
 						// delete the selected sketch
-						if(caught != null && classifier.classify(gesture) != null) {
-							homeSketch.setHome(false);
-							homeSketch = caught;
-							homeSketch.setHome(true);
+						if(caught != null) {
+							if(delete.classify(gesture) != null) {
+								removeSketch(caught, true);
+							}
+							else if(circle.classify(gesture) != null) {
+								if(homeSketch != null) { homeSketch.setHome(false); }
+								homeSketch = caught;
+								homeSketch.setHome(true);
+							}
 						}
 						
 						caught = null;

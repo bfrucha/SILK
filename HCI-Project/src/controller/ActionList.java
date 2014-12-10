@@ -2,6 +2,8 @@ package controller;
 
 import java.util.ArrayList;
 
+import view.MainScreen;
+
 // to perform undo/redo action
 public class ActionList {
 
@@ -30,15 +32,13 @@ public class ActionList {
 	
 	// set new index and return the last action made
 	public Action undo() {
-		actionIndex--;
-		if(actionIndex < 0) { actionIndex = 0; return null; }
+		if(--actionIndex < 0) { actionIndex = 0; return null; }
 		else return list.get(actionIndex+1);
 	}
 	
 	// set new index and return the previous undoed action
 	public Action redo() {
-		actionIndex++;
-		if(actionIndex >= list.size()) { actionIndex = list.size() - 1; return null; }
+		if(++actionIndex >= list.size()) { actionIndex = list.size() - 1; return null; }
 		else return list.get(actionIndex);
 	}
 	
