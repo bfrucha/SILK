@@ -43,6 +43,10 @@ public class InteractionsController {
 		actionList = new ActionList();
 	}
 
+	public ActionList getActionList() {
+		return actionList;
+	}
+	
 	// get all widget -> sketch interactions from the model
 	public HashMap<WidgetController, Object> getInteractions() {
 		return model.getInteractions();
@@ -51,6 +55,8 @@ public class InteractionsController {
 	// remove interactions for a given widget
 	public void removeInteraction(WidgetController widget) {
 		model.removeInteraction(widget);
+		
+		actionList.removeAll(widget);
 	}
 	
 	// remove all interactions that link the given sketch
@@ -63,6 +69,8 @@ public class InteractionsController {
 				interactions.remove(entry.getKey());
 			}
 		}
+		
+		actionList.removeAll(sketch);
 	}
 	
 	public CStateMachine attachDrawSM() {

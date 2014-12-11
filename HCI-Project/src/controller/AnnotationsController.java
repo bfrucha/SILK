@@ -34,6 +34,10 @@ public class AnnotationsController {
 		actionList = new ActionList();
 	}
 	
+	public ActionList getActionList() {
+		return actionList;
+	}
+	
 	public CStateMachine attachDrawSM() {
 		return new CStateMachine(view) {
 			CPolyLine annotation;

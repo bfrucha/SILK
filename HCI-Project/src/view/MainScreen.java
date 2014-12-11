@@ -25,6 +25,7 @@ import javax.swing.text.IconView;
 
 import model.PaletteModel;
 import model.ProjectModel;
+import controller.ActionList;
 import controller.PaletteController;
 import controller.ProjectController;
 
@@ -32,8 +33,8 @@ public class MainScreen extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	
-	public static Button undo;
-	public static Button redo;
+	public static UndoButton undo;
+	public static RedoButton redo;
 	
 	public MainScreen(int width, int height) {
 		super();
@@ -127,10 +128,10 @@ public class MainScreen extends JFrame {
 		JPanel buttons = new JPanel();
 		buttons.setLayout(new GridLayout(1, 2, 5, 0));
 		
-		undo = new Button("images/undo_active.png", "images/undo_inactive.png");
+		undo = new UndoButton();
 		buttons.add(undo);
 		
-		redo = new Button("images/redo_active.png", "images/redo_inactive.png");
+		redo = new RedoButton();
 		buttons.add(redo);
 		
 		menuBar.add(buttons, BorderLayout.EAST);
@@ -146,16 +147,34 @@ public class MainScreen extends JFrame {
 				controller.redo();
 			}
 		});
+		
+		setButtonsList(controller.getActionList());
+	}
+	
+	public static void setButtonsList(ActionList list) {
+		undo.setList(list);
+		redo.setList(list);
+		
+		checkButtons();
+	}
+	
+	// enabled buttons
+	public static void checkButtons() {
+		undo.checkList();
+		redo.checkList();
 	}
 
 	public static void main(String[] args) {
 		new MainScreen(1000, 1000);
 	}
 	
+	
+	/* other classes */
 	public class Button extends JButton {
 		
 		private ImageIcon activeIcon;
 		private ImageIcon inactiveIcon;
+	
 		
 		public Button(String active, String inactive) {
 			super();
@@ -164,7 +183,7 @@ public class MainScreen extends JFrame {
 			inactiveIcon = new ImageIcon(inactive);
 			
 			setBackground(new Color(238, 238, 238));
-			setIcon(activeIcon);
+			setActive(false);
 			setBorder(null);
 		}
 		
@@ -177,6 +196,59 @@ public class MainScreen extends JFrame {
 				setIcon(inactiveIcon);
 				setEnabled(false);
 			}
+		}
+	}
+	
+	public class UndoButton extends Button {
+		
+		// current list used
+		private ActionList list;
+		
+		public UndoButton() {
+			super("images/undo_active.png", "images/undo_inactive.png");
+			
+			addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					checkButtons();
+				}
+			});
+		}
+		
+		public void setList(ActionList list) {
+			this.list = list;
+			
+			checkList();
+		}
+		
+		public void checkList() {
+			setActive(!list.firstAction());
+		}
+		
+	}
+	
+	public class RedoButton extends Button {
+		
+		// current list used
+		private ActionList list;
+		
+		public RedoButton() {
+			super("images/redo_active.png", "images/redo_inactive.png");
+			
+			addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					checkButtons();
+				}
+			});
+		}
+		
+		public void setList(ActionList list) {
+			this.list = list;
+			
+			checkList();
+		}
+		
+		public void checkList() {
+			setActive(!list.lastAction());
 		}
 		
 	}

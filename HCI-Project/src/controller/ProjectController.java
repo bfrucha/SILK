@@ -75,6 +75,10 @@ public class ProjectController {
 		actionList = new ActionList();
 	}
 	
+	public ActionList getActionList() {
+		return actionList;
+	}
+	
 	public ProjectView getView() {
 		return view;
 	}
@@ -201,7 +205,11 @@ public class ProjectController {
 		}
 		
 		view.changeMode(currentMode);
-	}
+		
+		if(currentMode == INTERACTIONS_MODE) { MainScreen.setButtonsList(interactionsController.getActionList()); }
+		else if(currentMode == ANNOTATIONS_MODE) { MainScreen.setButtonsList(annotationsController.getActionList()); }
+		else { MainScreen.setButtonsList(actionList); }
+ 	}
 	
 	// returns project's sketches
 	public ArrayList<SketchController> getSketches() {

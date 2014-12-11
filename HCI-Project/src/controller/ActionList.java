@@ -28,6 +28,9 @@ public class ActionList {
 		}
 		
 		list.add(new Action(first, second, mode));
+		
+		// notice buttons that an action was added
+		MainScreen.checkButtons();
 	}
 	
 	// set new index and return the last action made
@@ -40,6 +43,30 @@ public class ActionList {
 	public Action redo() {
 		if(++actionIndex >= list.size()) { actionIndex = list.size() - 1; return null; }
 		else return list.get(actionIndex);
+	}
+	
+	public boolean firstAction() {
+		return actionIndex == 0;
+	}
+	
+	public boolean lastAction() {
+		return actionIndex == list.size()-1;
+	}
+	
+	public void removeAll(Object object) {
+		int index = 0;
+		
+		while(index < list.size()) {
+			Action action = list.get(index);
+			
+			if(action != null && 
+				(action.getFirst().equals(object) || action.getSecond().equals(object))) {
+				list.remove(index--);
+			}
+			index++;
+		}
+		
+		if(actionIndex >= list.size()) { actionIndex = list.size()-1; }
 	}
 	
 	protected class Action {
