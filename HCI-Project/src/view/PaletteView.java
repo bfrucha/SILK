@@ -35,6 +35,10 @@ public class PaletteView extends Canvas {
 		setBorder(new LineBorder(model.getBorder()));
 		setOpaque(false);
 		
+		// draw background 
+		newRectangle(0, 0, model.getSize().width, 10).setFillPaint(new Color(100, 100, 100, 230));
+		newRectangle(0, 10, m.getSize().width, m.getSize().height).setFillPaint(new Color(200, 200, 200, 230));
+		
 		initModes();
 		
 		validate();

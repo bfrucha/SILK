@@ -36,6 +36,8 @@ public class MainScreen extends JFrame {
 	public static UndoButton undo;
 	public static RedoButton redo;
 	
+	private JMenuBar menuBar;
+	
 	public MainScreen(int width, int height) {
 		super();
 
@@ -47,11 +49,11 @@ public class MainScreen extends JFrame {
 		// add a fresh project at the starting
 		ProjectController pc = newProject(width, height);
 		
-		//Palette's initialization
-		initPalette(pc);
-		
 		//Menu initialization
 		initMenu(pc);
+		
+		//Palette's initialization
+		initPalette(pc);
 		
 		validate();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -82,7 +84,7 @@ public class MainScreen extends JFrame {
 
 	
 	private void initMenu(final ProjectController pc) {
-		JMenuBar menuBar = new JMenuBar();
+		menuBar = new JMenuBar();
 		menuBar.setLayout(new BorderLayout());
 		menuBar.setBackground(new Color(238, 238, 238));
 		
@@ -121,6 +123,10 @@ public class MainScreen extends JFrame {
 		impl.add(bar);
 		menuBar.add(impl, BorderLayout.WEST);
 		setJMenuBar(menuBar);
+	}
+	
+	public int getMenuBarHeight() {
+		return menuBar.getHeight();
 	}
 	
 	/* init UNDO/REDO buttons */

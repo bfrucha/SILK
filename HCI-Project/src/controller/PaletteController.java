@@ -64,11 +64,13 @@ public class PaletteController {
 				{
 					public void action()
 					{
-						c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
-						if (c != null && c.getName() != "null" && c.getName() != selected_mode)
-						{
-							c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
-						}
+						try {
+							c = (Canvas)view.getComponentAt((int)view.getMousePosition().getX(), (int)view.getMousePosition().getY());
+							if (c != null && c.getName() != "null" && c.getName() != selected_mode)
+							{
+								c.newImage(2.5, 2.5, "images/"+c.getName()+"_neg.png").setOutlined(false);
+							}
+						} catch(NullPointerException exn) { /* mouse get out of view */ }
 					};
 				};
 			};
@@ -132,11 +134,18 @@ public class PaletteController {
 			// distance to the top-left corner of the canvas
 			Point2D delta;
 			
+			int minX = 0;
+			int minY = parent.getMenuBarHeight();
+			int maxX, maxY;
+			
 			State movable = new State() {
 				
 				Transition press = new Press(BUTTON1, ">> position") {
 					public void action() {
 						delta = getPoint();
+						
+						maxX = parent.getWidth()- (model.getSize().width + 2);
+						maxY = parent.getHeight()- (model.getSize().height+40);
 					}
 				};	
 				
@@ -155,18 +164,14 @@ public class PaletteController {
 							int x = (int) (relPoint.getX() + movement.getX());
 							int y = (int) (relPoint.getY() + movement.getY());
 							
-							if (x <= 0)
-								model.moveTo(model.getPosition().x, y);
-							if (y <= 0)
-								model.moveTo(x, model.getPosition().y);
-							if (x >= parent.getWidth()-model.getSize().width)
-								model.moveTo(model.getPosition().x, y);
-							if (y >= parent.getHeight()-model.getSize().height)
-								model.moveTo(x, model.getPosition().y);
+							if (x < minX || y < minY || x > maxX || y > maxY) {
+								if(x < minX) { x = minX; }
+								if(y < minY) { y = minY; }
+								if(x > maxX) { x = maxX; }
+								if(y > maxY) { y = maxY; }
+							}
 							
-							else
-								model.moveTo((int) (relPoint.getX() + movement.getX()), (int) (relPoint.getY() + movement.getY()));
-							
+							model.moveTo(x, y);
 							view.repaint();
 						}
 					}
