@@ -44,6 +44,11 @@ public class ProjectView extends Canvas {
 		setBackground(BG_COLOR);
 	}
 
+	@Override
+	public void setSize(int width, int height) {
+		super.setSize(width, height);
+		calque.setSize(width, height);
+	}
 	
 	// get the canvas where will be drawn all user's commands
 	public Canvas getCalque() {

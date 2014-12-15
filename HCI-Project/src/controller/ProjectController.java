@@ -8,8 +8,6 @@ import java.util.ArrayList;
 
 import controller.ActionList.Action;
 import fr.lri.swingstates.canvas.CPolyLine;
-import fr.lri.swingstates.canvas.CRectangle;
-import fr.lri.swingstates.canvas.CShape;
 import fr.lri.swingstates.canvas.CStateMachine;
 import fr.lri.swingstates.canvas.Canvas;
 import fr.lri.swingstates.gestures.Gesture;
@@ -17,7 +15,6 @@ import fr.lri.swingstates.gestures.dollar1.Dollar1Classifier;
 import fr.lri.swingstates.sm.State;
 import fr.lri.swingstates.sm.Transition;
 import fr.lri.swingstates.sm.transitions.Drag;
-import fr.lri.swingstates.sm.transitions.KeyPress;
 import fr.lri.swingstates.sm.transitions.Press;
 import fr.lri.swingstates.sm.transitions.Release;
 import view.InteractionsView;
@@ -73,6 +70,10 @@ public class ProjectController {
 		interactionsController = new InteractionsController(this, intModel, intView);
 		
 		actionList = new ActionList();
+	}
+	
+	public void resize(int width, int height) {
+		view.setSize(width, height);
 	}
 	
 	public ActionList getActionList() {
@@ -238,8 +239,6 @@ public class ProjectController {
 		
 		model.addSketch(sketchController);
 		view.update();
-		
-		actionList.addAction(sketchController, null, ActionList.CREATE);
 		
 		if(model.getSketches().size() == 1) { homeSketch = sketchController; }
 		else { sketchController.setHome(false); }
@@ -424,6 +423,8 @@ public class ProjectController {
 						if(!sketch.hasValideDimension()) {
 							model.removeSketch(sketch);
 							view.remove(sketch.getView());
+						} else { 
+							actionList.addAction(sketch, null, ActionList.CREATE);
 						}
 						
 						view.update();

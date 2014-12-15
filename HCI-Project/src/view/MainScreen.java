@@ -10,6 +10,8 @@ import java.awt.GridLayout;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -38,6 +40,8 @@ public class MainScreen extends JFrame {
 	
 	private JMenuBar menuBar;
 	
+	ProjectController pc;
+	
 	public MainScreen(int width, int height) {
 		super();
 
@@ -47,7 +51,7 @@ public class MainScreen extends JFrame {
 		setTitle("SILK");
 		
 		// add a fresh project at the starting
-		ProjectController pc = newProject(width, height);
+		pc = newProject(width, height);
 		
 		//Menu initialization
 		initMenu(pc);
@@ -57,6 +61,21 @@ public class MainScreen extends JFrame {
 		
 		validate();
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		
+		addComponentListener(new ComponentListener() {
+			public void componentResized(ComponentEvent event) {
+				pc.resize(getWidth(), getHeight());
+			}
+
+			@Override
+			public void componentHidden(ComponentEvent arg0) {}
+
+			@Override
+			public void componentMoved(ComponentEvent arg0) {}
+
+			@Override
+			public void componentShown(ComponentEvent arg0) {}
+		});
 	}
 
 	
