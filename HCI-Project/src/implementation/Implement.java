@@ -14,12 +14,16 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import model.WidgetModel;
 import view.MainScreen;
 import view.SketchView;
+import view.WidgetView;
+import controller.ActionList;
 import controller.InteractionsController;
 import controller.ProjectController;
 import controller.SketchController;
 import controller.WidgetController;
+import fr.lri.swingstates.canvas.CPolyLine;
 
 public class Implement 
 {
@@ -79,6 +83,129 @@ public class Implement
 		else
 			System.err.println("Erreur Implement.java : createClasses : folder n'est pas un dossier");
 	}
+	
+	//Methodes qui cherche si des widgets sont alignés
+	private ArrayList<WidgetController> prepareWidgets(SketchController s)
+	{
+		LinkedList<WidgetController> list = new LinkedList<WidgetController>();
+		LinkedList<WidgetController> listRest = new LinkedList<WidgetController>();
+		
+		list.addAll(s.getWidgets());
+		listRest.addAll(s.getWidgets());
+		
+		ArrayList<WidgetController> newWidgets = new ArrayList<WidgetController>();
+		ArrayList<WidgetController> temp = new ArrayList<WidgetController>();
+		
+		int distance = 15;
+		
+		double xCurr, yCurr, wCurr, hCurr, pCurr;
+		double xCheck, yCheck, wCheck, hCheck, pCheck;
+		double xNew, yNew, wNew, hNew, pNew;
+		
+		boolean aligne = false, wOk = false;
+		
+		for (WidgetController widget : list)
+		{
+			if (listRest.contains(widget))
+			{
+				xCurr = widget.getBounds().getX();
+				yCurr = widget.getBounds().getY();
+				wCurr = widget.getBounds().getWidth();
+				hCurr = widget.getBounds().getHeight();
+				pCurr = (wCurr + hCurr) * 2;
+				
+				for (WidgetController widgetCheck : list)
+				{
+					if (listRest.contains(widgetCheck) && widget != widgetCheck && widgetCheck.getType() == widget.getType()) //Si les widgets ont le meme type
+					{
+						xCheck = widgetCheck.getBounds().getX();
+						yCheck = widgetCheck.getBounds().getY();
+						wCheck = widgetCheck.getBounds().getWidth();
+						wNew = wCheck;
+						hCheck = widgetCheck.getBounds().getHeight();
+						pCheck = (wCheck + hCheck) * 2;
+						
+						//Check aligné en x1
+						if (Math.abs(xCurr - xCheck) < distance)// && Math.abs((yCurr + hCurr) - (yCheck + hCheck)) < distance)
+						{
+							xNew = xCurr;
+							aligne = true;
+						}
+						else
+							xNew = xCheck;
+						//check aligné en x2
+						/*if (Math.abs((xCheck+wCheck)-(xCurr+wCurr)) < distance)
+						{
+							xCheck -= Math.abs((xCheck+wCheck)-(xCurr+wCurr));
+							aligne = true;
+						}*/
+						/*double diff = Math.abs((xCheck+wCheck)-(xCurr+wCurr));
+						if (diff < distance)
+						{	
+							if (aligne)
+							{
+								if (wCurr > wCheck)
+									wNew = wCurr - diff;
+								else
+									wNew = wCheck - diff;
+								
+								wOk = true;
+							}
+							else
+							{
+								xNew = xCheck + diff;
+							}
+						}*/
+						//check aligné 
+						if(Math.abs(yCurr - yCheck) < distance)
+						{
+							yNew = yCurr;
+							aligne = true;
+						}
+						else
+							yNew = yCheck;
+						
+						if (Math.abs(pCurr - pCheck) < distance*1.5 && aligne)
+						{
+							hNew = hCurr;
+							if (!wOk)
+								wNew = wCurr;
+							aligne = true;
+						}
+						else
+						{
+							hNew = hCheck;
+							wNew = wCheck;
+						}
+						
+						if (aligne)
+						{
+							temp.add(createWidget(widgetCheck.getType(), xNew, yNew, wNew, hNew, widgetCheck.getGhost(), s));
+							listRest.remove(widgetCheck);
+						}
+						
+						aligne = false;
+					}
+				}
+				newWidgets.add(widget);
+				newWidgets.addAll(temp);
+				temp.clear();
+			}
+		}
+		
+		return newWidgets;
+	}
+	
+	//Méthode créant un widget
+	private WidgetController createWidget(int type, double x, double y, double w, double h, CPolyLine ghost, SketchController sketch)
+	{
+		WidgetModel model = new WidgetModel(type, x, y, w, h);
+		WidgetView view = new WidgetView(model);
+		
+		WidgetController controller = new WidgetController(sketch, model, view, ghost);
+		
+		return controller;
+	}
 
 	//Methode consturisant le string a écrire dans le fichier .java
 	//Ne gere que les bouttons pour l'instant
@@ -87,7 +214,8 @@ public class Implement
 		int i;
 		
 		//On récupère les widgets identifiés de ce sketch
-		LinkedList<WidgetController> widgets = s.getWidgets();
+		//LinkedList<WidgetController> widgets = s.getWidgets();
+		ArrayList<WidgetController> widgets = prepareWidgets(s);
 		
 		//Préparation du string a ecrire dans le fichier
 		String toWrite = "";

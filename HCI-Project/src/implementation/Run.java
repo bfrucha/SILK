@@ -6,23 +6,32 @@ import java.io.IOException;
 import view.MainScreen;
 import controller.ProjectController;
 
-public class Run
+public class Run extends Thread
 {
+	ProjectController proj;
+	MainScreen main;
+	
 	public Run (ProjectController p, MainScreen m)
 	{
+		proj = p;
+		main = m;
+	}
+	
+	@Override
+	public void run() {
 		File folder = new File("./tmp/");
 		if (!folder.exists())
 			folder.mkdirs();
 		
-		Implement i = new Implement(p, m);
+		Implement i = new Implement(proj, main);
 		i.createClasses(folder);
 		
 		Runtime rt = Runtime.getRuntime();
 		
 		//Compilation
 		try {
-			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + p.getHomeSketch().getName() + ".java").waitFor();
-			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + p.getHomeSketch().getName());
+			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + proj.getHomeSketch().getName() + ".java").waitFor();
+			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + proj.getHomeSketch().getName());
 			pr.waitFor();
 		}
 		catch (IOException e)

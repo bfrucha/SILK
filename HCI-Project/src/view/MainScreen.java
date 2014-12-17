@@ -114,7 +114,6 @@ public class MainScreen extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Implement i = new Implement(pc, MainScreen.this);
-				//"/Users/lsaublet/Desktop/ProjectSilkOutput/"
 				JFileChooser f = new JFileChooser(new java.io.File("."));
 				f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 				
@@ -131,6 +130,7 @@ public class MainScreen extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Run r = new Run(pc, MainScreen.this);
+				r.start();
 			}
 		});
 	
