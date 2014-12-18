@@ -417,7 +417,7 @@ public class SketchController {
 	
 	// enable changing type of a widget
 	private CStateMachine attachWidgetMachine() {
-		return new GestureSM(view, GestureSM.CIRCLE_TRIGO) {
+		return new GestureSM(view, GestureSM.CIRCLE_TRIGO, GestureSM.VALIDATION_COLOR) {
 			
 			public void gestureRecognized() {
 				CRectangle box = gesture.asPolyLine().getBoundingBox();
@@ -530,7 +530,7 @@ public class SketchController {
 	
 	// enable erasing shapes on view
 	private CStateMachine attachDeleteSM() {
-		return new GestureSM(view, GestureSM.PIGTAIL) {
+		return new GestureSM(view, GestureSM.PIGTAIL, GestureSM.SUPPRESSION_COLOR) {
 			public void gestureRecognized() {
 				model.removeShape((CPolyLine) caught);
 				view.removeShape(caught);

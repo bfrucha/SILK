@@ -155,7 +155,7 @@ public class InteractionsController {
 	}
 	
 	public CStateMachine attachDeleteSM() {
-		return new GestureSM(view, GestureSM.PIGTAIL) {
+		return new GestureSM(view, GestureSM.PIGTAIL, GestureSM.SUPPRESSION_COLOR) {
 			public void gestureRecognized() {
 				WidgetController widget = model.getWidgetFromSegment((CSegment) caught);
 				actionList.addAction(widget, model.getInteractions().get(widget), ActionList.DELETE);

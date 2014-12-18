@@ -1,5 +1,6 @@
 package controller;
 
+import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.LinkedList;
 
@@ -23,21 +24,27 @@ public abstract class GestureSM extends CStateMachine {
 	public static final Dollar1Classifier PIGTAIL = Dollar1Classifier.newClassifier("classifier/delete.cl");
 	public static final Dollar1Classifier CIRCLE_TRIGO = Dollar1Classifier.newClassifier("classifier/circle.cl");
 	
+	public static final Color ACTION_COLOR = Color.blue;
+	public static final Color SUPPRESSION_COLOR = Color.red;
+	public static final Color VALIDATION_COLOR = new Color(25, 125, 25);
+	
 	private Canvas view;
 	
 	// classifier and gesture which will help classify user's input
 	protected Dollar1Classifier classifier;
 	protected Gesture gesture = null;
+	protected Color recognitionColor;
 	
 	private CPolyLine ghost = null;
 	
 	protected CShape caught = null;
 	
 	
-	public GestureSM(Canvas view, Dollar1Classifier classifier) {
+	public GestureSM(Canvas view, Dollar1Classifier classifier, Color rc) {
 		super(view);
 		this.view = view;
 		this.classifier = classifier;
+		this.recognitionColor = rc;
 	}
 	
 	
@@ -51,7 +58,7 @@ public abstract class GestureSM extends CStateMachine {
 				
 				ghost = view.newPolyLine(mouse);
 				ghost.setFilled(false);
-				ghost.setOutlinePaint(ProjectView.SUPPRESSION_ACTION_COLOR);
+				ghost.setOutlinePaint(ACTION_COLOR);
 				ghost.setPickable(false);
 			}
 		};
@@ -76,9 +83,14 @@ public abstract class GestureSM extends CStateMachine {
 						caught = shapesCaught.get(index++);
 					}
 					
-					System.out.println(caught);
+					
+					//System.out.println(caught);
 					// we want to pick a line
 					if(!(caught instanceof CPolyLine) && !(caught instanceof CSegment)) { caught = null; }
+				} else if(classifier.classify(gesture) != null) {
+					ghost.setOutlinePaint(recognitionColor);
+				} else { 
+					ghost.setOutlinePaint(ACTION_COLOR);
 				}
 			}
 		};
