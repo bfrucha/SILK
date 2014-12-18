@@ -252,6 +252,8 @@ public class ProjectController {
 		SketchView cloneView = new SketchView(cloneModel);
 		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
 		
+		cloneController.setHome(false);
+		
 		// change the name of the new sketch
 		String newName = cloneModel.getName()+"Copy";
 		while(!isValidName(newName)) {
