@@ -2,6 +2,7 @@ package controller;
 
 import java.awt.BasicStroke;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,13 +63,17 @@ public class InteractionsController {
 	// remove all interactions that link the given sketch
 	public void removeInteraction(SketchController sketch) {
 		HashMap<WidgetController, Object> interactions = model.getInteractions();
+		ArrayList<WidgetController> toRemove = new ArrayList<WidgetController>();
+		
 		int size = interactions.size();
 		
 		for(Map.Entry<WidgetController, Object> entry: interactions.entrySet()) {
 			if(interactions.get(entry.getKey()).equals(sketch)) {
-				interactions.remove(entry.getKey());
+				toRemove.add(entry.getKey());
 			}
 		}
+		
+		for(WidgetController w : toRemove) { interactions.remove(w); }
 		
 		actionList.removeAll(sketch);
 	}

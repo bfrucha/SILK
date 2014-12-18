@@ -59,11 +59,12 @@ public class ActionList {
 		while(index < list.size()) {
 			Action action = list.get(index);
 			
-			if(action != null && 
-				(action.getFirst().equals(object) || action.getSecond().equals(object))) {
-				list.remove(index--);
-			}
-			index++;
+			try {
+				if(action.getFirst().equals(object) || action.getSecond().equals(object)) {
+					list.remove(index--);
+				}
+			} catch(NullPointerException exn) {}
+			index++; 
 		}
 		
 		if(actionIndex >= list.size()) { actionIndex = list.size()-1; }
