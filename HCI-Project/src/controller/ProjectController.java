@@ -231,7 +231,7 @@ public class ProjectController {
 	// create a new Sketch with basic attributes
 	public SketchController createSketch(Point tlc) {
 		String name = "Sketch" + ++sketchesNb;
-		while(!isValidName(name)) { name = "-"+name; }
+		while(!isValidName(name)) { name += "Copy"; }
 		
 		SketchModel sketchModel = new SketchModel(name, tlc, new Dimension(1, 1));
 		SketchView sketchView = new SketchView(sketchModel);
@@ -253,9 +253,9 @@ public class ProjectController {
 		SketchController cloneController = new SketchController(this, cloneModel, cloneView);
 		
 		// change the name of the new sketch
-		String newName = "-"+cloneModel.getName();
+		String newName = cloneModel.getName()+"Copy";
 		while(!isValidName(newName)) {
-			newName = "-" + newName;
+			newName += "Copy";
 		}
 		cloneModel.changeName(newName);
 		

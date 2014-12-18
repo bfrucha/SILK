@@ -656,8 +656,8 @@ public class SketchController {
 			private void validateTitle() {
 				String newName = ghost.getText();
 				
-				if(!project.isValidName(newName) && !newName.equals(model.getName())) {
-					newName = "-"+newName;
+				while(!project.isValidName(newName) && !newName.equals(model.getName())) {
+					newName += "Copy";
 				}
 				model.changeName(newName);
 				titleBar.remove(ghost);
