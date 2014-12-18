@@ -1,24 +1,17 @@
 package implementation;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import model.WidgetModel;
 import view.MainScreen;
 import view.SketchView;
 import view.WidgetView;
-import controller.ActionList;
 import controller.InteractionsController;
 import controller.ProjectController;
 import controller.SketchController;
@@ -30,6 +23,8 @@ public class Implement
 	
 	private ProjectController project;
 	private InteractionsController interactions;
+	private HashMap<WidgetController, Object> inters;
+	private boolean intersChanged = false;
 	private MainScreen mainscreen;
 	
 	public Implement(ProjectController p, MainScreen m)
@@ -96,6 +91,9 @@ public class Implement
 		ArrayList<WidgetController> newWidgets = new ArrayList<WidgetController>();
 		ArrayList<WidgetController> temp = new ArrayList<WidgetController>();
 		
+		inters = new HashMap<WidgetController, Object>();
+		inters.putAll(interactions.getInteractions());
+		
 		int distance = 15;
 		
 		double xCurr, yCurr, wCurr, hCurr, pCurr;
@@ -134,11 +132,6 @@ public class Implement
 						else
 							xNew = xCheck;
 						//check aligné en x2
-						/*if (Math.abs((xCheck+wCheck)-(xCurr+wCurr)) < distance)
-						{
-							xCheck -= Math.abs((xCheck+wCheck)-(xCurr+wCurr));
-							aligne = true;
-						}*/
 						/*double diff = Math.abs((xCheck+wCheck)-(xCurr+wCurr));
 						if (diff < distance)
 						{	
@@ -165,7 +158,7 @@ public class Implement
 						else
 							yNew = yCheck;
 						
-						if (Math.abs(pCurr - pCheck) < distance*1.5 && aligne)
+						if (Math.abs(pCurr - pCheck) < distance*2 && aligne)
 						{
 							hNew = hCurr;
 							if (!wOk)
@@ -180,8 +173,15 @@ public class Implement
 						
 						if (aligne)
 						{
-							temp.add(createWidget(widgetCheck.getType(), xNew, yNew, wNew, hNew, widgetCheck.getGhost(), s));
+							WidgetController newWidget = createWidget(widgetCheck.getType(), xNew, yNew, wNew, hNew, widgetCheck.getGhost(), s);
+							temp.add(newWidget);
 							listRest.remove(widgetCheck);
+							if (inters.containsKey(widgetCheck))
+							{
+								inters.put(newWidget, inters.get(widgetCheck));
+								inters.remove(widgetCheck);
+								intersChanged = true;
+							}
 						}
 						
 						aligne = false;
@@ -219,6 +219,12 @@ public class Implement
 		
 		//Préparation du string a ecrire dans le fichier
 		String toWrite = "";
+		
+		HashMap<WidgetController, Object> tempInters = new HashMap<WidgetController, Object>();
+		if (intersChanged)
+			tempInters.putAll(inters);
+		else
+			tempInters.putAll(interactions.getInteractions());
 		
 		//Ajout des imports
 		toWrite += "import java.awt.Dimension;\nimport java.awt.Rectangle;\nimport java.awt.event.ActionEvent;\nimport java.awt.event.ActionListener;\n";
@@ -261,8 +267,8 @@ public class Implement
 			if (w.getModel().getType() == 0) // Btn
 			{
 				toWrite += "\t\t" + "btn"+i+" = new JButton();\n";
-				if (interactions.getInteractions().get(w) != null)
-					toWrite += "\t\t" + "btn"+i+".setText(\" to " + ((SketchController) interactions.getInteractions().get(w)).getName() + "\");\n";
+				if (tempInters.get(w) != null)
+					toWrite += "\t\t" + "btn"+i+".setText(\" to " + ((SketchController) tempInters.get(w)).getName() + "\");\n";
 				toWrite += "\t\t" + "btn"+i+".setBounds(new Rectangle("+(int)w.getBounds().getX() + ","+(int)(w.getBounds().getY()-SketchView.TB_HEIGHT) + "," + (int)w.getBounds().getWidth() + "," + (int)w.getBounds().getHeight() +"));\n";
 				toWrite += "\t\t" + "btn"+i+".addActionListener(this);\n";
 				toWrite += "\t\t" + "add(btn"+i+");\n\n";
@@ -294,15 +300,18 @@ public class Implement
 		//ActionPerformed
 		toWrite += "\n\tpublic void actionPerformed(ActionEvent e) {\n";
 		
-		if (!interactions.getInteractions().isEmpty()) //Si il existe des interactions
+		if (!tempInters.isEmpty()) //Si il existe des interactions
 		{
-			for (Entry<WidgetController, Object> e : interactions.getInteractions().entrySet())
+			for (Entry<WidgetController, Object> e : tempInters.entrySet())
 			{
 				int idWid = widgets.indexOf(e.getKey()) + 1;
 				if (idWid != 0)
 				{
 					toWrite += "\t\t" + "if (e.getSource() == btn"+ idWid + "){\n";
-					toWrite += "\t\t\t" + ((SketchController) e.getValue()).getName().replaceAll("\\s+","") + " frame = new " + ((SketchController) e.getValue()).getName().replaceAll("\\s+","") + "();\n";
+					if (((SketchController)e.getValue()).getName().equals(sketchName))
+						toWrite += "\t\t\tdispose();";
+					else
+						toWrite += "\t\t\t" + ((SketchController) e.getValue()).getName().replaceAll("\\s+","") + " frame = new " + ((SketchController) e.getValue()).getName().replaceAll("\\s+","") + "();\n";
 					toWrite += "\t\t" + "}\n";
 				}
 			}

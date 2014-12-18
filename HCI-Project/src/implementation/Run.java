@@ -27,11 +27,11 @@ public class Run extends Thread
 		i.createClasses(folder);
 		
 		Runtime rt = Runtime.getRuntime();
-		
+		String homeName = proj.getHomeSketch().getName().replaceAll("\\s+","");
 		//Compilation
 		try {
-			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + proj.getHomeSketch().getName() + ".java").waitFor();
-			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + proj.getHomeSketch().getName());
+			rt.exec("javac -sourcepath " + folder.getCanonicalPath() + "/ " + folder.getCanonicalPath() + "/" + homeName + ".java").waitFor();
+			Process pr = rt.exec("java -cp " + folder.getCanonicalPath() + "/" + " " + homeName);
 			pr.waitFor();
 		}
 		catch (IOException e)
